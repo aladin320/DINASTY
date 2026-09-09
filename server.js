@@ -17,10 +17,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json({ limit: '1mb' }));
 
-// Serve the DINASTY frontend (index.html, style.css, script.js) from the
-// same origin as the API, so the browser's fetch() calls in script.js
-// just work — no CORS setup needed.
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve the frontend files from the project root, where index.html, style.css
+// and script.js live, so the browser's API calls stay same-origin.
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/style.css', (_req, res) => res.sendFile(path.join(__dirname, 'style.css')));
+app.get('/script.js', (_req, res) => res.sendFile(path.join(__dirname, 'script.js')));
+app.get('/Architecture.html', (_req, res) => res.sendFile(path.join(__dirname, 'Architecture.html')));
 
 // ---------- Small validation helpers ----------
 // Nothing fancy — just enough to keep obviously-bad data (empty strings,

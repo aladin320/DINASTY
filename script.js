@@ -112,7 +112,7 @@ postCommentBtn.addEventListener('click', async () => {
   if (!text) return;
   postCommentBtn.disabled = true;
   try {
-    const saved = await apiPost('/api/hero/comments', { author: 'You', text });
+    const saved = await apiPost('/api/hero/comments', { author: getCurrentUserName(), text });
     renderHeroComment(saved, { prepend: true });
     commentInput.value = '';
     updateCommentCount();
@@ -331,7 +331,7 @@ postReviewBtn.addEventListener('click', async () => {
 
   postReviewBtn.disabled = true;
   try {
-    await apiPost(`/api/reviews/${encodeURIComponent(selectedAI)}`, { author: 'You', rating, text });
+    await apiPost(`/api/reviews/${encodeURIComponent(selectedAI)}`, { author: getCurrentUserName(), rating, text });
     await loadReviews(selectedAI);
     reviewInput.value = '';
     setStarRating(0);
@@ -397,6 +397,11 @@ function onModalClose(overlay) {
 const signInBtn = document.getElementById('signInBtn');
 const signInOverlay = document.getElementById('signInOverlay');
 const modalCloseBtn = document.getElementById('modalCloseBtn');
+const identityView = document.getElementById('identityView');
+const identityForm = document.getElementById('identityForm');
+const identityName = document.getElementById('identityName');
+const identityEmail = document.getElementById('identityEmail');
+const aiPickerView = document.getElementById('aiPickerView');
 const modalSubtext = document.getElementById('modalSubtext');
 const aiSearch = document.getElementById('aiSearch');
 const aiGrid = document.getElementById('aiGrid');
@@ -414,6 +419,37 @@ const confirmYesBtn = document.getElementById('confirmYesBtn');
 const confirmNoBtn = document.getElementById('confirmNoBtn');
 
 let selectedAI = null;
+let pendingCategory = null;
+
+function getCurrentUser() {
+  try {
+    return JSON.parse(localStorage.getItem('dinastyUser')) || null;
+  } catch (_err) {
+    return null;
+  }
+}
+
+function getCurrentUserName() {
+  return getCurrentUser()?.name || 'You';
+}
+
+function updateSignInButton() {
+  const user = getCurrentUser();
+  signInBtn.textContent = user ? user.name : 'Sign in';
+  signInBtn.setAttribute('aria-label', user ? `Signed in as ${user.name}` : 'Sign in');
+}
+
+function showIdentityView() {
+  identityView.classList.remove('hidden-view');
+  aiPickerView.classList.add('hidden-view');
+  identityName.value = getCurrentUser()?.name || '';
+  identityEmail.value = getCurrentUser()?.email || '';
+}
+
+function showAiPickerView() {
+  identityView.classList.add('hidden-view');
+  aiPickerView.classList.remove('hidden-view');
+}
 
 function filterGridByCategory(category) {
   document.querySelectorAll('.ai-option').forEach(opt => {
@@ -430,13 +466,21 @@ function resetGridView() {
 }
 
 function openSignInModal(category) {
-  currentCategory = category || null;
+  pendingCategory = category || null;
+  currentCategory = pendingCategory;
   aiSearch.value = '';
   filterGridByCategory(currentCategory);
   resetGridView();
+  showIdentityView();
   signInOverlay.classList.add('open');
   document.body.style.overflow = 'hidden';
   onModalOpen(signInOverlay);
+  requestAnimationFrame(() => identityName.focus());
+}
+
+function openAiPicker(category) {
+  currentCategory = category || null;
+  showAiPickerView();
 
   if (!currentCategory) {
     modalSubtext.textContent = "Pick the model that powers your workspace. You can change this later in settings.";
@@ -463,6 +507,17 @@ function closeSignInModal() {
   document.body.style.overflow = '';
   onModalClose(signInOverlay);
 }
+
+identityForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const name = identityName.value.trim();
+  const email = identityEmail.value.trim().toLowerCase();
+  if (!name || !email || !identityForm.checkValidity()) return;
+
+  localStorage.setItem('dinastyUser', JSON.stringify({ name, email }));
+  updateSignInButton();
+  openAiPicker(pendingCategory);
+});
 
 signInBtn.addEventListener('click', () => openSignInModal(null));
 modalCloseBtn.addEventListener('click', closeSignInModal);
@@ -934,7 +989,7 @@ postProjectCommentBtn.addEventListener('click', async () => {
 
   postProjectCommentBtn.disabled = true;
   try {
-    await apiPost(`/api/projects/${activeProjectId}/comments`, { author: 'You', text });
+    await apiPost(`/api/projects/${activeProjectId}/comments`, { author: getCurrentUserName(), text });
     const project = await apiGet(`/api/projects/${activeProjectId}`);
     renderProjectComments(project.comments);
     projectCommentInput.value = '';
@@ -1247,7 +1302,17 @@ document.addEventListener('keydown', (event) => {
 });
 
 document.querySelectorAll('.docs-card').forEach(card => {
-  card.addEventListener('click', () => showDocsDetail(card.dataset.doc));
+  card.addEventListener('click', () => {
+    if (card.dataset.doc === 'architecture') return;
+    showDocsDetail(card.dataset.doc);
+  });
+});
+
+document.querySelectorAll('.docs-card').forEach(card => {
+  card.addEventListener('click', () => {
+    if (card.dataset.doc !== 'architecture') return;
+    window.location.href = 'Architecture.html';
+  });
 });
 
 const POPULAR_TOPIC_TARGETS = ['learning', 'learning', 'learning', 'guides', 'guides', 'guides'];
@@ -1323,5 +1388,6 @@ devToolGrid.addEventListener("click", event => {
 });
 
 // ---------- Initial data load ----------
+updateSignInButton();
 loadHero();
 renderProjectGrid();
