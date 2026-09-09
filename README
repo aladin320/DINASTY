@@ -1,0 +1,75 @@
+# DINASTY
+
+Goal-based AI tool discovery site — Express backend + SQLite database.
+
+## What's persisted now
+
+Everything that used to live only in a browser-memory JS array (and reset
+on every page refresh) is now stored in a real SQLite database
+(`dinasty.db`, created automatically on first run):
+
+- AI performance reviews (star rating + comment, per tool)
+- Community projects and their comments
+- Hero-banner comments and the like counter
+- Quote requests submitted through "Request a quote"
+
+The AI catalog itself (the 46 tools, their descriptions, categories, etc.)
+stays as static config in `public/script.js` — it's app data the site
+ships with, not something users generate, so it doesn't need a table.
+
+## Setup
+
+```bash
+npm install
+cp .env.example .env
+```
+
+Open `.env` and, optionally:
+- add your `ANTHROPIC_API_KEY` to get real answers from the "AI Agent"
+  chat button (it runs in a demo mode without one)
+- set `ADMIN_KEY` if you want to check submitted quote requests via
+  `GET /api/admin/quotes` (send it back as the `x-admin-key` header)
+
+## Run
+
+```bash
+npm start
+```
+
+Then open **http://localhost:3000** — don't open `index.html` directly as
+a file; the frontend talks to the backend over `fetch()`, which needs a
+real server to answer it.
+
+`npm run dev` restarts the server automatically on file changes.
+
+## Database
+
+- File: `dinasty.db` next to `db.js` (override with `DB_PATH` in `.env`)
+- On first run, a handful of demo reviews/projects/comments are seeded
+  automatically so the site looks populated — same content that used to
+  be hardcoded in the old version, just persisted now.
+- Delete `dinasty.db` (and the `-wal`/`-shm` files next to it) to reset
+  everything back to that seed state.
+- Schema lives in `db.js` — it's plain SQL run through `better-sqlite3`,
+  nothing to migrate or configure separately.
+
+## API
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/reviews/:aiKey` | List reviews for one AI |
+| POST | `/api/reviews/:aiKey` | Add a review `{author, rating, text}` |
+| GET | `/api/projects` | List community projects |
+| GET | `/api/projects/:id` | One project + its comments |
+| POST | `/api/projects` | Share a project `{title, author, aiKey, description, link}` |
+| POST | `/api/projects/:id/comments` | Comment on a project `{author, text}` |
+| GET | `/api/hero` | Hero like count + comments |
+| POST | `/api/hero/comments` | Add a hero comment `{author, text}` |
+| POST | `/api/hero/like` | Adjust the like counter `{liked: true\|false}` |
+| POST | `/api/quote` | Submit a quote request |
+| GET | `/api/admin/quotes` | List quote requests (needs `x-admin-key` header + `ADMIN_KEY` set) |
+| POST | `/api/agent-chat` | AI Agent chat backend |
+
+All endpoints validate their input server-side and return `400` on bad
+data — this is the same code path the frontend uses, but it's plain JSON
+so you can also hit it directly with curl/Postman.

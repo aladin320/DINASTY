@@ -1,0 +1,3753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI changing Software Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600;1,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1513;
+  --bg-raised:#151D1A;
+  --line:#26332F;
+  --ink:#EDEEE7;
+  --ink-dim:#9BAAA4;
+  --ink-faint:#68766F;
+  --sage:#8FBFA3;
+  --sage-dim:#5C7C6C;
+  --amber:#E7B978;
+
+  /* Aliases so shared components (modal, quote CTA, category cards)
+     inherit this theme's palette instead of falling back to defaults */
+  --green: var(--sage);
+  --green-dim: var(--sage-dim);
+  --panel: var(--bg-raised);
+  --panel-2: #1B2622;
+  --muted: var(--ink-dim);
+  --gray: var(--ink);
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ color-scheme: dark; }
+body{
+  background: radial-gradient(ellipse at 15% -10%, #1B2622 0%, var(--bg) 45%) var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+a{ color:inherit; text-decoration:none; }
+button{ font-family:inherit; cursor:pointer; }
+::selection{ background: var(--sage); color: #0F1513; }
+
+/* ---------- NAVBAR ---------- */
+.navbar{
+  position: sticky; top:0; z-index: 50;
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 18px clamp(20px, 5vw, 64px);
+  background: rgba(15,21,19,0.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.logo{ display:flex; align-items:center; gap:10px; }
+.logo-mark{
+  width:30px; height:30px; border-radius:8px;
+  background: linear-gradient(155deg, var(--sage) 0%, #3E5A4C 100%);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'JetBrains Mono', monospace; font-weight:600; font-size:13px;
+  color:#0F1513;
+  box-shadow: 0 0 0 1px rgba(143,191,163,0.25), 0 6px 16px -6px rgba(143,191,163,0.55);
+  flex-shrink:0;
+}
+.logo-title{
+  font-family:'Space Grotesk', sans-serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+.logo-title span{ color: var(--sage); }
+
+.nav-links{
+  display:flex; align-items:center; gap:32px;
+  list-style:none;
+  font-size: 14px; font-weight:500; color: var(--ink-dim);
+}
+.nav-links a{ position:relative; transition: color .2s ease; }
+.nav-links a:hover{ color: var(--ink); }
+.nav-links a::after{
+  content:''; position:absolute; left:0; bottom:-6px; width:0; height:1px;
+  background: var(--sage); transition: width .2s ease;
+}
+.nav-links a:hover::after{ width:100%; }
+
+.nav-actions{ display:flex; align-items:center; gap:14px; }
+.btn-ghost{
+  background:none; border:1px solid var(--line); color: var(--ink-dim);
+  padding: 9px 18px; border-radius: 7px; font-size: 13.5px; font-weight:500;
+  transition: all .2s ease;
+}
+.btn-ghost:hover{ color: var(--ink); border-color: var(--sage-dim); }
+.btn-solid{
+  background: var(--sage); color:#0F1513; border:none;
+  padding: 9px 18px; border-radius: 7px; font-size: 13.5px; font-weight:600;
+  transition: transform .15s ease, box-shadow .2s ease;
+  box-shadow: 0 4px 14px -4px rgba(143,191,163,0.45);
+}
+.btn-solid:hover{ transform: translateY(-1px); box-shadow: 0 8px 20px -6px rgba(143,191,163,0.6); }
+.btn-solid:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+
+/* ---------- STAGE / HERO ---------- */
+.stage{
+  display:flex; justify-content:center;
+  padding: clamp(28px, 5vw, 56px) clamp(16px, 5vw, 40px) 20px;
+}
+.eyebrow{ display:flex; justify-content:center; margin-bottom: 18px; }
+.eyebrow span{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--sage);
+  border: 1px solid var(--sage-dim);
+  background: rgba(143,191,163,0.07);
+  padding: 6px 14px; border-radius: 999px;
+}
+
+.device-wrap{ display:flex; justify-content:center; }
+.device{
+  width: min(1120px, 100%);
+  border-radius: 18px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  box-shadow: 0 40px 80px -30px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+.device-bar{
+  display:flex; align-items:center; gap:8px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #182420, #141C19);
+}
+.device-dot{ width:10px; height:10px; border-radius:50%; background:#3A4842; }
+.device-dot:nth-child(1){ background:#E17B6B; }
+.device-dot:nth-child(2){ background:#E3C36B; }
+.device-dot:nth-child(3){ background:#8FBFA3; }
+.device-path{
+  margin-left: 14px;
+  font-family:'JetBrains Mono', monospace; font-size:12px; color: var(--ink-faint);
+}
+
+.screen{
+  position: relative;
+  display:grid; grid-template-columns: 1.1fr 0.9fr;
+  align-items:center; gap: 20px;
+  padding: clamp(28px, 5vw, 56px);
+  overflow:hidden;
+}
+.screen-grain{
+  position:absolute; inset:0; pointer-events:none; opacity:0.05;
+  background-image: repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+
+.content-left{ position:relative; z-index:1; }
+.headline{
+  font-family:'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: clamp(32px, 4.2vw, 52px);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  margin-bottom: 18px;
+}
+.headline .green{ color: var(--sage); }
+.headline .gray{ color: var(--ink); }
+
+.subtext{
+  color: var(--ink-dim);
+  font-size: 16px; line-height: 1.65;
+  max-width: 46ch;
+  margin-bottom: 30px;
+}
+
+.mini-stats{
+  display:flex; gap: 30px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.mini-stats div{ display:flex; flex-direction:column; gap:3px; }
+.mini-stats strong{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 21px; font-weight:600; color: var(--amber);
+}
+.mini-stats span{ font-size: 12.5px; color: var(--ink-faint); }
+
+.content-right{ position:relative; z-index:1; }
+.image-frame{ position: relative; border-radius: 14px; overflow: visible; }
+.image-frame img{
+  width:100%; height: 320px; object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  filter: saturate(0.9) contrast(1.02);
+  display:block;
+}
+.profile-card{
+  position:absolute; left: -18px; bottom: -22px;
+  display:flex; align-items:center; gap:10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 16px 10px 10px;
+  box-shadow: 0 20px 40px -18px rgba(0,0,0,0.6);
+}
+.avatar{
+  width: 36px; height: 36px; border-radius: 9px;
+  background: linear-gradient(155deg, var(--sage), #3E5A4C);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'JetBrains Mono', monospace; font-weight:600; font-size:13px;
+  color:#0F1513;
+}
+.profile-meta .name{ font-size: 13.5px; font-weight:600; color: var(--ink); }
+.profile-meta .role{ font-size: 11.5px; color: var(--ink-faint); }
+.pulse-dot{
+  width:8px; height:8px; border-radius:50%;
+  background: var(--sage);
+  box-shadow: 0 0 0 0 rgba(143,191,163,0.6);
+  animation: pulse 2.2s infinite;
+  margin-left: 4px;
+}
+@keyframes pulse{
+  0%{ box-shadow: 0 0 0 0 rgba(143,191,163,0.55); }
+  70%{ box-shadow: 0 0 0 9px rgba(143,191,163,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(143,191,163,0); }
+}
+
+/* ---------- HERO ROBOT (ambient background figure) ----------
+   Sits behind .screen-grain and all hero content: it's the first
+   child of .screen so it paints first, and it carries no positive
+   z-index while every content layer above it does (.screen-grain
+   isn't explicitly stacked either, so DOM order alone keeps this
+   behind it; .content-left/.content-right use z-index:1 which
+   always wins over an unstacked/auto layer regardless of order).
+   The whole layer — svg, glow, particles, scanline — is
+   pointer-events:none so it can never intercept clicks/taps. */
+.hero-robot-wrap{
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.hero-robot-glow{
+  position: absolute;
+  width: 68%;
+  aspect-ratio: 1;
+  left: -6%;
+  top: 8%;
+  background: radial-gradient(circle at 58% 32%, rgba(139,124,246,0.35), rgba(92,200,224,0.16) 45%, transparent 72%);
+  filter: blur(46px);
+}
+
+.hero-robot{
+  position: relative;
+  width: min(560px, 60%);
+  max-width: 620px;
+  height: auto;
+  opacity: 0.55;
+  filter:
+    drop-shadow(0 0 26px rgba(139,124,246,0.35))
+    drop-shadow(0 0 54px rgba(92,200,224,0.2));
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 94%);
+          mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 94%);
+  margin-left: -4%;
+}
+
+.robot-bloom{ opacity: 0.6; }
+.robot-crisp{ opacity: 0.85; }
+
+/* Head is its own group so it can tilt independently of the body —
+   this is exactly what a single flattened image couldn't do. */
+.robot-head{
+  transform-box: view-box;
+  transform-origin: 180px 192px;
+  animation: robotLook 8s ease-in-out infinite;
+}
+
+/* Torso + crossed arms move together as one static "arms crossed"
+   pose, with only a slow breathing scale for a sense of life. */
+.robot-torso{
+  transform-box: view-box;
+  transform-origin: 180px 300px;
+  animation: robotBreathe 6s ease-in-out infinite;
+}
+
+@keyframes robotLook{
+  0%   { transform: rotate(-4deg); }
+  30%  { transform: rotate(3deg); }
+  55%  { transform: rotate(5deg); }
+  80%  { transform: rotate(-2deg); }
+  100% { transform: rotate(-4deg); }
+}
+
+@keyframes robotBreathe{
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.015); }
+}
+
+.hero-scanline{
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(139,124,246,0.14) 48%, transparent 52%);
+  mix-blend-mode: screen;
+  animation: scanSweep 5.5s linear infinite;
+}
+
+@keyframes scanSweep{
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.hero-particles{ position: absolute; inset: 0; }
+.particle{
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(143,191,163,0.95), rgba(143,191,163,0) 70%);
+  opacity: 0;
+  animation: particleFloat 6s ease-in infinite;
+}
+.particle:nth-child(1){ left: 42%; top: 70%; animation-delay: 0s; }
+.particle:nth-child(2){ left: 34%; top: 55%; animation-delay: 1.1s; background: radial-gradient(circle, rgba(139,124,246,0.95), transparent 70%); }
+.particle:nth-child(3){ left: 26%; top: 75%; animation-delay: 2.3s; }
+.particle:nth-child(4){ left: 38%; top: 40%; animation-delay: 3.1s; background: radial-gradient(circle, rgba(92,200,224,0.95), transparent 70%); }
+.particle:nth-child(5){ left: 20%; top: 60%; animation-delay: 0.6s; }
+.particle:nth-child(6){ left: 30%; top: 30%; animation-delay: 2.8s; background: radial-gradient(circle, rgba(139,124,246,0.9), transparent 70%); }
+
+@keyframes particleFloat{
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  10%  { opacity: 0.9; }
+  50%  { transform: translateY(-40px) scale(1.15); opacity: 0.7; }
+  90%  { opacity: 0; }
+  100% { transform: translateY(-90px) scale(0.8); opacity: 0; }
+}
+
+/* ---------- ENGAGEMENT BAR (like + comments) ---------- */
+.engage-wrap{ display:flex; justify-content:center; padding: 0 clamp(16px, 5vw, 40px) 60px; }
+.engage{ width: min(1120px, 100%); }
+.engage-bar{
+  display:flex; align-items:center; gap: 14px;
+  padding: 16px clamp(20px, 4vw, 32px);
+  border: 1px solid var(--line);
+  border-top: none;
+  background: var(--bg-raised);
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+.like-btn{
+  display:flex; align-items:center; gap:8px;
+  background: none; border: 1px solid var(--line);
+  color: var(--ink-dim);
+  padding: 8px 16px; border-radius: 999px;
+  font-size: 13.5px; font-weight:500;
+  transition: all .18s ease;
+}
+.like-btn svg{ width:16px; height:16px; transition: transform .18s ease; }
+.like-btn.liked{ color: #0F1513; background: var(--sage); border-color: var(--sage); }
+.like-btn.liked svg{ transform: scale(1.15); }
+.like-btn:active svg{ transform: scale(0.85); }
+
+.comment-count{ font-size: 13.5px; color: var(--ink-faint); font-family:'JetBrains Mono', monospace; }
+
+.comment-section{ padding: 26px clamp(20px, 4vw, 32px) 6px; }
+.comment-heading{
+  font-family:'Space Grotesk', sans-serif;
+  font-size: 17px; font-weight:600; margin-bottom: 16px;
+  color: var(--ink);
+}
+.comment-form{ display:flex; gap: 12px; margin-bottom: 26px; }
+.comment-form .avatar{ flex-shrink:0; }
+.comment-input-wrap{ flex:1; }
+.comment-input{
+  width:100%; resize: vertical; min-height: 46px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: 'Inter', sans-serif; font-size: 14px;
+  line-height: 1.5;
+}
+.comment-input:focus{
+  outline: none; border-color: var(--sage-dim);
+  box-shadow: 0 0 0 3px rgba(143,191,163,0.12);
+}
+.comment-form-actions{ display:flex; justify-content:flex-end; margin-top: 8px; }
+.comment-list{ display:flex; flex-direction:column; gap: 20px; padding-bottom: 24px; }
+.comment{ display:flex; gap: 12px; }
+.comment-body{ flex:1; }
+.comment-top{ display:flex; align-items:baseline; gap:10px; margin-bottom: 4px; }
+.comment-author{ font-size: 13.5px; font-weight:600; color: var(--ink); }
+.comment-time{ font-size: 12px; color: var(--ink-faint); }
+.comment-text{ font-size: 13.5px; color: var(--ink-dim); line-height:1.55; }
+
+/* ---------- HOME / CATEGORIES ---------- */
+.categories-wrap{ display:flex; justify-content:center; padding: 20px clamp(16px, 5vw, 40px) 70px; }
+.categories{ max-width: 1120px; width: 100%; text-align:center; }
+.categories-eyebrow{
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--sage);
+  margin: 0 0 10px;
+}
+.categories-title{
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  margin: 0 0 10px;
+}
+.categories-subtext{
+  color: var(--ink-dim);
+  font-size: 15px;
+  max-width: 480px;
+  margin: 0 auto 32px;
+}
+.category-grid{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.category-card{
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px 12px;
+  transition: border-color .15s ease, transform .15s ease, background .15s ease;
+}
+.category-card:hover{
+  border-color: var(--sage-dim);
+  transform: translateY(-2px);
+  background: var(--panel-2);
+}
+.cat-emoji{ font-size: 26px; }
+.cat-label{ font-size: 13px; font-weight:600; color: var(--ink); }
+
+/* ---------- PRODUCT ---------- */
+.product-wrap{ display:flex; justify-content:center; padding: 20px clamp(16px, 5vw, 40px) 80px; }
+.product{ max-width: 1120px; width: 100%; text-align:center; }
+.product-eyebrow{
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--sage);
+  margin: 0 0 10px;
+}
+.product-title{
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.6vw, 40px);
+  line-height: 1.15;
+  margin: 0 0 14px;
+}
+.product-subtext{
+  color: var(--ink-dim);
+  font-size: 15.5px;
+  line-height: 1.6;
+  max-width: 56ch;
+  margin: 0 auto 44px;
+}
+
+.product-grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+  text-align: left;
+}
+.product-feature{
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px 20px;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.product-feature:hover{ border-color: var(--sage-dim); transform: translateY(-2px); }
+.feature-icon{ font-size: 24px; display:block; margin-bottom: 12px; }
+.product-feature h3{
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.product-feature p{
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+  margin: 0;
+}
+
+.product-cta{ display:flex; justify-content:center; gap: 14px; }
+
+@media (max-width: 860px){
+  .product-grid{ grid-template-columns: 1fr 1fr; }
+  .product-cta{ flex-direction: column; align-items: center; }
+}
+
+/* ---------- MODALS (sign-in + quote) ---------- */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(5,7,5,0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+.modal-overlay.open{ display: flex; }
+
+.modal-panel{
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 40px 90px -30px rgba(0,0,0,0.8);
+  animation: modalIn .18s ease;
+}
+@keyframes modalIn{
+  from{ opacity: 0; transform: translateY(8px) scale(.98); }
+  to{ opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-close{
+  position: absolute;
+  top: 18px; right: 18px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.modal-close:hover{ color: var(--gray); border-color: var(--muted); }
+.modal-close svg{ width: 14px; height: 14px; }
+
+.modal-eyebrow{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin: 0 0 8px;
+}
+.modal-title{
+  font-family: var(--font-display);
+  font-size: 26px;
+  margin: 0 0 8px;
+}
+.modal-subtext{
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+/* AI search + grid (sign-in modal) */
+.ai-search{
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--gray);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.ai-search:focus{ outline: none; border-color: var(--green-dim); }
+.ai-search::placeholder{ color: var(--muted); }
+.ai-search.hidden-view{ display: none; }
+
+.ai-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.ai-grid::-webkit-scrollbar{ width: 6px; }
+.ai-grid::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 3px; }
+.ai-grid.hidden-view{ display: none; }
+
+.ai-option{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease;
+}
+.ai-option:hover{ border-color: var(--muted); }
+.ai-option.hidden{ display: none; }
+
+.ai-mark{
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--c, var(--green));
+  color: #06170a;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.ai-info{ display: flex; flex-direction: column; min-width: 0; }
+.ai-name{ font-size: 13px; font-weight: 600; }
+.ai-vendor{ font-size: 11px; color: var(--muted); }
+
+.modal-continue{ width: 100%; padding: 12px; font-size: 14px; }
+
+/* Detail view (shown after picking one AI) */
+.ai-detail{ display: none; }
+.ai-detail.open{ display: block; }
+
+.detail-back{
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 18px;
+}
+.detail-back:hover{ color: var(--green); }
+
+.detail-head{ display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.detail-mark{ width: 40px; height: 40px; font-size: 16px; }
+.detail-name{ margin: 0; font-family: var(--font-display); font-size: 18px; }
+.detail-vendor{ margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+
+.detail-block{ margin-bottom: 18px; }
+.detail-label{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--green);
+  margin: 0 0 6px;
+}
+.detail-text{ margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
+
+.confirm-box{
+  display: none;
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.confirm-box.open{ display: block; }
+.confirm-text{ margin: 0 0 12px; font-size: 13px; color: var(--gray); }
+.confirm-actions{ display: flex; gap: 10px; }
+.confirm-actions button{ flex: 1; padding: 9px; font-size: 13px; }
+
+/* ---------- REQUEST A QUOTE (primary CTA) ---------- */
+.btn-quote{
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  color: #06170a;
+  background: linear-gradient(135deg, var(--sage) 0%, var(--amber) 100%);
+  box-shadow: 0 0 0 1px rgba(143,191,163,0.3), 0 8px 24px -8px rgba(143,191,163,0.5);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.btn-quote:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(143,191,163,0.4), 0 12px 28px -8px rgba(143,191,163,0.65);
+}
+.btn-quote:active{ transform: translateY(0); }
+
+.quote-form{ display: flex; flex-direction: column; gap: 14px; }
+.form-row{ display: flex; flex-direction: column; gap: 6px; }
+.form-row label{ font-size: 12px; font-weight: 600; color: var(--muted); }
+.form-row input,
+.form-row select{
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--gray);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.form-row input:focus,
+.form-row select:focus{ outline: none; border-color: var(--green-dim); }
+.form-row select{
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%239BAAA4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.form-row-split{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.quote-submit{ width: 100%; padding: 12px; font-size: 14px; margin-top: 6px; }
+
+.quote-success{
+  display: none;
+  text-align: center;
+  padding: 20px 0 4px;
+  color: var(--green);
+  font-size: 14px;
+}
+.quote-success.open{ display: block; }
+
+/* ---------- AI AGENT (onboarding chat) ---------- */
+.agent-trigger{ display: flex; align-items: center; gap: 7px; }
+.agent-trigger-dot{
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #0F1513;
+  box-shadow: 0 0 0 0 rgba(15,21,19,0.5);
+  animation: pulse 2.2s infinite;
+}
+
+.agent-panel{ max-width: 420px; padding: 24px; display: flex; flex-direction: column; height: min(600px, 80vh); }
+
+.agent-header{ display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-shrink: 0; }
+.agent-mark{ width: 38px; height: 38px; font-size: 15px; background: var(--sage); }
+.agent-title{ margin: 0; font-family: var(--font-display); font-size: 16px; color: var(--ink); }
+.agent-status{ margin: 2px 0 0; font-size: 12px; color: var(--ink-faint); display: flex; align-items: center; gap: 6px; }
+.agent-status-dot{ position: static; width: 7px; height: 7px; margin-left: 0; }
+
+.agent-messages{
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px 10px;
+  margin-bottom: 8px;
+}
+.agent-msg{
+  max-width: 84%;
+  padding: 10px 13px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.agent-msg.bot{
+  align-self: flex-start;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  border-bottom-left-radius: 4px;
+}
+.agent-msg.user{
+  align-self: flex-end;
+  background: var(--sage);
+  color: #0F1513;
+  font-weight: 500;
+  border-bottom-right-radius: 4px;
+}
+.agent-msg.typing{ display: flex; gap: 4px; align-items: center; padding: 12px 14px; }
+.agent-msg.typing span{
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ink-faint);
+  animation: agentTyping 1.1s infinite ease-in-out;
+}
+.agent-msg.typing span:nth-child(2){ animation-delay: .15s; }
+.agent-msg.typing span:nth-child(3){ animation-delay: .3s; }
+@keyframes agentTyping{
+  0%, 60%, 100%{ transform: translateY(0); opacity: .5; }
+  30%{ transform: translateY(-4px); opacity: 1; }
+}
+
+.agent-quick-replies{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.quick-reply-btn{
+  background: var(--panel-2);
+  border: 1px solid var(--sage-dim);
+  color: var(--sage);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 999px;
+  transition: background .15s ease, transform .15s ease;
+}
+.quick-reply-btn:hover{ background: rgba(143,191,163,0.1); transform: translateY(-1px); }
+.quick-reply-btn.action{
+  background: var(--sage);
+  color: #0F1513;
+  border-color: var(--sage);
+}
+
+.agent-input-row{ display: flex; gap: 8px; flex-shrink: 0; }
+.agent-input{
+  flex: 1;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+}
+.agent-input:focus{ outline: none; border-color: var(--sage-dim); }
+.agent-input:disabled{ opacity: .5; cursor: not-allowed; }
+.agent-input::placeholder{ color: var(--ink-faint); }
+.agent-send{ padding: 10px 16px; font-size: 13px; flex-shrink: 0; }
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 860px){
+  .nav-links{ display:none; }
+  .screen{ grid-template-columns: 1fr; }
+  .content-right{ order:-1; }
+  .image-frame img{ height: 220px; }
+  .profile-card{ left: 12px; bottom: -18px; }
+  .mini-stats{ flex-wrap: wrap; row-gap: 14px; }
+  .category-grid{ grid-template-columns: repeat(2, 1fr); }
+  .ai-grid{ grid-template-columns: 1fr; }
+  .form-row-split{ grid-template-columns: 1fr; }
+  .hero-robot-wrap{ justify-content: center; }
+  .hero-robot{ width: 82%; opacity: 0.32; margin-left: 0; }
+  .hero-robot-glow{ width: 95%; left: auto; }
+  .particle:nth-child(n+5){ display: none; }
+  .agent-panel{ height: min(560px, 86vh); }
+}
+
+@media (max-width: 480px){
+  .hero-robot{ width: 92%; opacity: 0.22; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .pulse-dot{ animation: none; }
+  .like-btn, .like-btn svg{ transition: none; }
+  .robot-head, .robot-torso, .particle, .hero-scanline{ animation: none; }
+}
+/* =========================================================
+   DOCUMENTATION
+========================================================= */
+
+.docs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(5, 7, 5, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.docs-overlay.open {
+  display: flex;
+}
+
+
+/* Main Docs Window */
+
+.docs-panel {
+  position: relative;
+
+  width: min(1050px, 100%);
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(143, 191, 163, 0.08),
+      transparent 35%
+    ),
+    var(--bg-raised);
+
+  border: 1px solid var(--line);
+  border-radius: 18px;
+
+  padding: 36px;
+
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.7);
+
+  animation: docsIn .2s ease;
+}
+
+
+@keyframes docsIn {
+
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+}
+
+
+/* Header */
+
+.docs-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+
+  padding-bottom: 30px;
+
+  border-bottom: 1px solid var(--line);
+}
+
+
+.docs-eyebrow {
+  margin-bottom: 8px;
+
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+
+  color: var(--sage);
+}
+
+
+.docs-title {
+  font-family: var(--font-display);
+
+  font-size: clamp(30px, 4vw, 46px);
+
+  line-height: 1.05;
+
+  margin-bottom: 12px;
+}
+
+
+.docs-intro {
+  max-width: 650px;
+
+  color: var(--ink-dim);
+
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+
+/* Close */
+
+.docs-close {
+  flex-shrink: 0;
+
+  width: 38px;
+  height: 38px;
+
+  border-radius: 50%;
+
+  border: 1px solid var(--line);
+
+  background: transparent;
+
+  color: var(--ink-dim);
+
+  font-size: 25px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: .2s;
+}
+
+
+.docs-close:hover {
+  color: var(--ink);
+
+  border-color: var(--sage);
+
+  background: rgba(143, 191, 163, .08);
+}
+
+
+/* Documentation cards */
+
+.docs-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 16px;
+
+  margin-top: 28px;
+}
+
+
+.docs-card {
+  display: flex;
+
+  gap: 18px;
+
+  text-align: left;
+
+  padding: 24px;
+
+  background: var(--bg);
+
+  border: 1px solid var(--line);
+
+  border-radius: 14px;
+
+  color: var(--ink);
+
+  transition:
+    transform .2s ease,
+    border-color .2s ease,
+    background .2s ease;
+}
+
+
+.docs-card:hover {
+  transform: translateY(-3px);
+
+  border-color: var(--sage-dim);
+
+  background: var(--panel-2);
+}
+
+
+.docs-icon {
+  width: 46px;
+  height: 46px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: rgba(143, 191, 163, .08);
+
+  border: 1px solid var(--line);
+
+  font-size: 22px;
+}
+
+
+.docs-card h3 {
+  font-family: var(--font-display);
+
+  font-size: 18px;
+
+  margin-bottom: 8px;
+}
+
+
+.docs-card p {
+  color: var(--ink-dim);
+
+  font-size: 13.5px;
+
+  line-height: 1.6;
+
+  margin-bottom: 14px;
+}
+
+
+.docs-link {
+  font-size: 12.5px;
+
+  color: var(--sage);
+
+  font-family: var(--font-mono);
+}
+
+
+/* Popular */
+
+.docs-popular {
+  margin-top: 35px;
+}
+
+
+.docs-section-heading {
+  margin-bottom: 14px;
+
+  color: var(--ink-faint);
+
+  font-family: var(--font-mono);
+
+  font-size: 10px;
+
+  letter-spacing: .12em;
+}
+
+
+.docs-topic-grid {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 9px;
+}
+
+
+.docs-topic {
+  padding: 9px 13px;
+
+  border-radius: 999px;
+
+  border: 1px solid var(--line);
+
+  background: var(--bg);
+
+  color: var(--ink-dim);
+
+  font-size: 12.5px;
+
+  transition: .2s;
+}
+
+
+.docs-topic:hover {
+  color: var(--ink);
+
+  border-color: var(--sage-dim);
+
+  background: var(--panel-2);
+}
+
+
+/* Detail page */
+
+.docs-detail {
+  display: none;
+
+  margin-top: 28px;
+}
+
+
+.docs-detail.open {
+  display: block;
+}
+
+
+.docs-grid.hidden,
+.docs-popular.hidden {
+  display: none;
+}
+
+
+.docs-back {
+  background: none;
+
+  border: none;
+
+  color: var(--sage);
+
+  font-family: var(--font-mono);
+
+  font-size: 12px;
+
+  padding: 0;
+
+  margin-bottom: 28px;
+}
+
+
+.docs-detail-content {
+  max-width: 800px;
+}
+
+
+.docs-detail-icon {
+  display: block;
+
+  font-size: 38px;
+
+  margin-bottom: 14px;
+}
+
+
+.docs-detail-label {
+  font-family: var(--font-mono);
+
+  color: var(--sage);
+
+  font-size: 11px;
+
+  letter-spacing: .12em;
+
+  margin-bottom: 8px;
+}
+
+
+.docs-detail-content h2 {
+  font-family: var(--font-display);
+
+  font-size: clamp(28px, 4vw, 42px);
+
+  margin-bottom: 14px;
+}
+
+
+.docs-detail-content > p {
+  color: var(--ink-dim);
+
+  font-size: 15px;
+
+  line-height: 1.7;
+
+  margin-bottom: 28px;
+}
+
+
+/* Detail sections */
+
+.docs-content-section {
+  padding: 20px 0;
+
+  border-top: 1px solid var(--line);
+}
+
+
+.docs-content-section h3 {
+  font-family: var(--font-display);
+
+  font-size: 17px;
+
+  margin-bottom: 8px;
+}
+
+
+.docs-content-section p {
+  color: var(--ink-dim);
+
+  font-size: 13.5px;
+
+  line-height: 1.65;
+}
+
+
+.docs-content-list {
+  margin-top: 12px;
+
+  display: grid;
+
+  gap: 8px;
+}
+
+
+.docs-content-list span {
+  color: var(--ink-dim);
+
+  font-size: 13px;
+}
+
+
+.docs-content-list span::before {
+  content: "→";
+
+  color: var(--sage);
+
+  margin-right: 8px;
+}
+
+
+/* Mobile */
+
+@media (max-width: 700px) {
+
+  .docs-panel {
+    padding: 24px;
+
+    max-height: 94vh;
+  }
+
+  .docs-header {
+    gap: 15px;
+  }
+
+  .docs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-card {
+    padding: 20px;
+  }
+
+}
+
+/* ---------- COMMUNITY: shared projects ---------- */
+.community-wrap{ display:flex; justify-content:center; padding: 20px clamp(16px, 5vw, 40px) 80px; }
+.community{ max-width: 1120px; width: 100%; text-align:center; }
+.community-eyebrow{
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--sage);
+  margin: 0 0 10px;
+}
+.community-title{
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  margin: 0 0 10px;
+}
+.community-subtext{
+  color: var(--ink-dim);
+  font-size: 15px;
+  max-width: 540px;
+  margin: 0 auto 26px;
+}
+.community-actions{ display:flex; justify-content:center; margin-bottom: 36px; }
+
+.project-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  text-align:left;
+}
+.project-card{
+  display:flex; flex-direction:column; gap: 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  text-align:left;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.project-card:hover{ border-color: var(--sage-dim); transform: translateY(-2px); }
+.project-card-top{ display:flex; align-items:center; gap:8px; }
+.project-ai-mark{
+  width: 24px; height: 24px; border-radius: 6px; font-size: 11px;
+  background: var(--sage); color:#0F1513;
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--font-display); font-weight:700;
+}
+.project-ai-name{ font-size: 12px; color: var(--ink-faint); font-family: var(--font-mono); }
+.project-card-title{ font-family: var(--font-display); font-size: 16.5px; color: var(--ink); margin:0; }
+.project-card-desc{
+  font-size: 13px; color: var(--ink-dim); line-height:1.55;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  margin: 0;
+}
+.project-card-foot{
+  display:flex; justify-content:space-between; align-items:center;
+  padding-top: 10px; border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--ink-faint);
+}
+
+/* Project detail modal */
+.project-panel{ max-width: 560px; }
+.project-ai-pill{
+  display:inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing:0.06em; text-transform:uppercase;
+  color: var(--sage);
+  border: 1px solid var(--sage-dim);
+  background: rgba(143,191,163,0.07);
+  padding: 5px 12px; border-radius: 999px;
+  margin-bottom: 14px;
+}
+.project-full-desc{ margin: 4px 0 10px; color: var(--ink-dim); }
+.project-link{
+  display:inline-block; font-size: 13px; color: var(--sage);
+  font-family: var(--font-mono);
+  margin-bottom: 8px;
+}
+.project-link:hover{ text-decoration: underline; }
+.project-comment-section{ padding: 22px 0 0; }
+.project-comment-section .comment-heading{ margin-bottom: 14px; }
+
+/* ---------- AI performance reviews (inside sign-in modal detail view) ---------- */
+.review-heading-row{ display:flex; align-items:baseline; justify-content:space-between; gap: 10px; margin-bottom: 10px; }
+.review-summary{ font-size: 12.5px; color: var(--ink-faint); font-family: var(--font-mono); white-space: nowrap; }
+.review-list{ display:flex; flex-direction:column; gap: 14px; margin-bottom: 16px; }
+.review-empty{ font-size: 13px; color: var(--ink-faint); margin: 0; }
+.review-item{ padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.review-item:last-child{ border-bottom: none; padding-bottom: 0; }
+.review-top{ display:flex; align-items:center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.review-stars{ color: var(--amber); font-size: 12px; letter-spacing: 1px; }
+
+.review-form{ display:flex; flex-direction:column; gap: 10px; }
+.star-input{ display:flex; gap: 4px; }
+.star-input .star{
+  background:none; border:none; font-size: 20px; line-height:1;
+  color: var(--line); padding: 0; transition: color .15s ease, transform .1s ease;
+}
+.star-input .star.filled{ color: var(--amber); }
+.star-input .star:hover{ transform: scale(1.1); }
+.review-input{
+  width:100%; resize: vertical; min-height: 44px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: var(--font-body); font-size: 13.5px; line-height:1.5;
+}
+.review-input:focus{ outline:none; border-color: var(--sage-dim); }
+.review-submit{ align-self:flex-start; padding: 9px 18px; font-size: 13px; }
+
+.optional-tag{ color: var(--ink-faint); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+@media (max-width: 860px){
+  .project-grid{ grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <div class="logo-mark">D</div>
+    <div class="logo-title">DIN<span>A</span>STY</div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#categoriesSection" id="homeLink">Home</a></li>
+    <li><a href="#productSection">Product</a></li>
+    <li><a href="#communitySection">Community</a></li>
+    <li><a href="#">Blog</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn-ghost" id="signInBtn">Sign in</button>
+    <button class="btn-solid agent-trigger" id="aiAgentBtn">
+      <span class="agent-trigger-dot"></span>
+      AI Agent
+    </button>
+    <button class="btn-quote" id="requestQuoteBtn">Request a quote</button>
+  </div>
+</nav>
+
+<div class="stage">
+  <div style="width:100%;">
+    <div class="eyebrow"><span>Built for engineering teams</span></div>
+
+    <div class="device-wrap">
+      <div class="device">
+        <div class="device-bar">
+          <span class="device-dot"></span>
+          <span class="device-dot"></span>
+          <span class="device-dot"></span>
+          <span class="device-path">dinasty.dev / future-of-code</span>
+        </div>
+
+        <div class="screen">
+          <!-- Ambient hero robot: built as layered SVG (not a flat image) so the
+               head and torso/arms can be animated completely independently.
+               Sits behind the grain overlay and all content via stacking order
+               (it's painted first and carries no z-index above them); the
+               whole layer is pointer-events:none so it never blocks clicks. -->
+          <div class="hero-robot-wrap" aria-hidden="true">
+            <div class="hero-robot-glow"></div>
+
+            <svg class="hero-robot" viewBox="0 0 360 460" xmlns="http://www.w3.org/2000/svg" focusable="false">
+              <defs>
+                <linearGradient id="robotGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#8FBFA3" stop-opacity="0.55"/>
+                  <stop offset="55%" stop-color="#8B7CF6" stop-opacity="0.45"/>
+                  <stop offset="100%" stop-color="#5CC8E0" stop-opacity="0.4"/>
+                </linearGradient>
+                <linearGradient id="visorGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#BFAFFF"/>
+                  <stop offset="100%" stop-color="#7DE0F0"/>
+                </linearGradient>
+                <filter id="robotBloomFilter" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="9"/>
+                </filter>
+              </defs>
+
+              <!-- soft blurred bloom, painted first so it sits behind the crisp outline -->
+              <g class="robot-bloom" filter="url(#robotBloomFilter)">
+                <g class="robot-torso">
+                  <circle cx="98" cy="232" r="28" fill="url(#robotGrad)"/>
+                  <circle cx="262" cy="232" r="28" fill="url(#robotGrad)"/>
+                  <rect x="108" y="210" width="144" height="170" rx="42" fill="url(#robotGrad)"/>
+                  <line x1="100" y1="234" x2="248" y2="352" stroke="url(#robotGrad)" stroke-width="32" stroke-linecap="round"/>
+                  <line x1="260" y1="234" x2="112" y2="352" stroke="url(#robotGrad)" stroke-width="32" stroke-linecap="round"/>
+                </g>
+                <g class="robot-head">
+                  <rect x="163" y="188" width="34" height="22" rx="6" fill="url(#robotGrad)"/>
+                  <rect x="130" y="95" width="100" height="95" rx="32" fill="url(#robotGrad)"/>
+                  <circle cx="126" cy="138" r="9" fill="url(#robotGrad)"/>
+                  <circle cx="234" cy="138" r="9" fill="url(#robotGrad)"/>
+                </g>
+              </g>
+
+              <!-- crisp outline, on top of the bloom -->
+              <g class="robot-crisp">
+                <g class="robot-torso">
+                  <circle cx="98" cy="232" r="28" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>
+                  <circle cx="262" cy="232" r="28" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>
+                  <rect x="108" y="210" width="144" height="170" rx="42" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>
+                  <line x1="100" y1="234" x2="248" y2="352" stroke="url(#robotGrad)" stroke-width="30" stroke-linecap="round"/>
+                  <line x1="260" y1="234" x2="112" y2="352" stroke="url(#robotGrad)" stroke-width="30" stroke-linecap="round"/>
+                  <circle cx="180" cy="295" r="16" fill="rgba(10,14,12,.4)" stroke="url(#visorGrad)" stroke-width="2"/>
+                  <circle cx="180" cy="295" r="6" fill="url(#visorGrad)"/>
+                </g>
+                <g class="robot-head">
+                  <rect x="163" y="188" width="34" height="22" rx="6" fill="url(#robotGrad)" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+                  <rect x="130" y="95" width="100" height="95" rx="32" fill="url(#robotGrad)" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>
+                  <circle cx="126" cy="138" r="9" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+                  <circle cx="234" cy="138" r="9" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+                  <rect x="147" y="124" width="66" height="20" rx="10" fill="url(#visorGrad)" opacity="0.85"/>
+                  <line x1="180" y1="95" x2="180" y2="75" stroke="url(#visorGrad)" stroke-width="3" stroke-linecap="round"/>
+                  <circle cx="180" cy="70" r="5" fill="url(#visorGrad)"/>
+                </g>
+              </g>
+            </svg>
+
+            <div class="hero-scanline"></div>
+
+            <div class="hero-particles">
+              <span class="particle"></span>
+              <span class="particle"></span>
+              <span class="particle"></span>
+              <span class="particle"></span>
+              <span class="particle"></span>
+              <span class="particle"></span>
+            </div>
+          </div>
+
+          <div class="screen-grain"></div>
+
+          <div class="content-left">
+            <h1 class="headline">
+              <span class="green">AI changing</span><br>
+              <span class="gray">Software Development</span>
+            </h1>
+            <p class="subtext">
+              From autocomplete to autonomous agents — see how AI is reshaping the way teams plan, write, and ship code, one commit at a time.
+            </p>
+            <div class="mini-stats">
+              <div><strong>3.4x</strong><span>Faster shipping</span></div>
+              <div><strong>40%</strong><span>Fewer bugs</span></div>
+              <div><strong>12k+</strong><span>Teams onboard</span></div>
+            </div>
+          </div>
+
+          <div class="content-right">
+            <div class="image-frame">
+              <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80" alt="Developer working with code on screen">
+              <div class="profile-card">
+                <div class="avatar">AZ</div>
+                <div class="profile-meta">
+                  <p class="name">Aladin Zihindula</p>
+                  <p class="role">Lead AI Engineer</p>
+                </div>
+                <div class="pulse-dot"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="categories-wrap" id="categoriesSection">
+  <div class="categories">
+    <p class="categories-eyebrow">Start with your goal</p>
+    <h2 class="categories-title">What do you want to accomplish?</h2>
+    <p class="categories-subtext">Pick what you're trying to do — we'll show you the right tools. No need to know any AI by name.</p>
+
+    <div class="category-grid">
+      <button class="category-card" data-category="writing"><span class="cat-emoji">✍️</span><span class="cat-label">Writing</span></button>
+      <button class="category-card" data-category="image"><span class="cat-emoji">🎨</span><span class="cat-label">Image Generation</span></button>
+      <button class="category-card" data-category="video"><span class="cat-emoji">🎬</span><span class="cat-label">Video</span></button>
+      <button class="category-card" data-category="music"><span class="cat-emoji">🎵</span><span class="cat-label">Music</span></button>
+      <button class="category-card" data-category="coding"><span class="cat-emoji">💻</span><span class="cat-label">Coding</span></button>
+      <button class="category-card" data-category="productivity"><span class="cat-emoji">📊</span><span class="cat-label">Productivity</span></button>
+      <button class="category-card" data-category="education"><span class="cat-emoji">📚</span><span class="cat-label">Education</span></button>
+      <button class="category-card" data-category="research"><span class="cat-emoji">🧠</span><span class="cat-label">Research</span></button>
+      <button class="category-card" data-category="marketing"><span class="cat-emoji">📢</span><span class="cat-label">Marketing</span></button>
+      <button class="category-card" data-category="business"><span class="cat-emoji">💼</span><span class="cat-label">Business</span></button>
+      <button class="category-card" data-category="automation"><span class="cat-emoji">🤖</span><span class="cat-label">Automation</span></button>
+      <button class="category-card" data-category="voice"><span class="cat-emoji">🎙️</span><span class="cat-label">Voice</span></button>
+      <button class="category-card" data-category="design"><span class="cat-emoji">📱</span><span class="cat-label">Design</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="product-wrap" id="productSection">
+  <div class="product">
+    <p class="product-eyebrow">Product</p>
+    <h2 class="product-title">Stop searching for AI tools.<br>Tell us what you want to do.</h2>
+    <p class="product-subtext">DINASTY matches your goal to the right AI in seconds — no need to know any tool by name, compare pricing pages, or guess what fits.</p>
+
+    <div class="product-grid">
+      <div class="product-feature">
+        <span class="feature-icon">🎯</span>
+        <h3>Goal-based discovery</h3>
+        <p>Pick from 13 goals — writing, coding, research, design, and more — instead of scrolling a wall of AI names you don't recognize.</p>
+      </div>
+      <div class="product-feature">
+        <span class="feature-icon">✅</span>
+        <h3>Curated catalog</h3>
+        <p>42 tools, hand-picked and organized by what they're actually good at — not a dumped directory of every AI product that exists.</p>
+      </div>
+      <div class="product-feature">
+        <span class="feature-icon">⚡</span>
+        <h3>Instant recommendation</h3>
+        <p>Choose a goal and we jump straight to the best-fit tool, with a plain explanation of how it works and why it's the right pick.</p>
+      </div>
+      <div class="product-feature">
+        <span class="feature-icon">👥</span>
+        <h3>Built for teams</h3>
+        <p>3.4x faster shipping and 40% fewer bugs across 12k+ teams already using DINASTY to bring AI into their workflow.</p>
+      </div>
+    </div>
+
+    <div class="product-cta">
+      <button class="btn-quote" id="productQuoteBtn">Request a quote</button>
+      <button class="btn-ghost" id="productTryBtn">Try it now</button>
+    </div>
+  </div>
+</div>
+
+<div class="engage-wrap">
+  <div class="engage">
+    <div class="engage-bar">
+      <button class="like-btn" id="likeBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
+        </svg>
+        <span id="likeCount">128</span>
+      </button>
+      <span class="comment-count" id="commentCount">6 comments</span>
+    </div>
+
+    <div class="comment-section">
+      <p class="comment-heading">Comments</p>
+
+      <div class="comment-form">
+        <div class="avatar">YO</div>
+        <div class="comment-input-wrap">
+          <textarea class="comment-input" id="commentInput" placeholder="Write a comment…"></textarea>
+          <div class="comment-form-actions">
+            <button class="btn-solid" id="postCommentBtn">Post</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="comment-list" id="commentList">
+        <div class="comment">
+          <div class="avatar">MK</div>
+          <div class="comment-body">
+            <div class="comment-top">
+              <span class="comment-author">Marie K.</span>
+              <span class="comment-time">2h ago</span>
+            </div>
+            <p class="comment-text">The 3.4x shipping stat matches what we're seeing on our own team since we adopted agentic reviews.</p>
+          </div>
+        </div>
+        <div class="comment">
+          <div class="avatar">TN</div>
+          <div class="comment-body">
+            <div class="comment-top">
+              <span class="comment-author">Tunde N.</span>
+              <span class="comment-time">5h ago</span>
+            </div>
+            <p class="comment-text">Curious how the 40% fewer bugs figure was measured — across which repo sizes?</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== COMMUNITY: performance talk lives on each AI's detail
+     view (in the sign-in modal). This section is for sharing finished
+     projects and getting comments on the work itself. ==================== -->
+<div class="community-wrap" id="communitySection">
+  <div class="community">
+    <p class="community-eyebrow">Community</p>
+    <h2 class="community-title">Projects people shipped with AI</h2>
+    <p class="community-subtext">Browse what others built, which tool they used, and what people are saying about it. Used an AI for something? Share it and get feedback.</p>
+
+    <div class="community-actions">
+      <button class="btn-quote" id="shareProjectBtn">Share your project</button>
+    </div>
+
+    <div class="project-grid" id="projectGrid"></div>
+  </div>
+</div>
+
+<!-- Sign-in modal: choose an AI by goal or by name -->
+<div class="modal-overlay" id="signInOverlay">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <p class="modal-eyebrow">Sign in to DINASTY</p>
+    <h2 class="modal-title" id="modalTitle">Choose your AI</h2>
+    <p class="modal-subtext" id="modalSubtext">Pick the model that powers your workspace. You can change this later in settings.</p>
+
+    <input type="text" class="ai-search" id="aiSearch" placeholder="Search AI tools…">
+
+    <div class="ai-grid" id="aiGrid">
+      <button class="ai-option" data-ai="claude" data-category="writing">
+        <span class="ai-mark" style="--c:#D97757">C</span>
+        <span class="ai-info"><span class="ai-name">Claude</span><span class="ai-vendor">Anthropic</span></span>
+      </button>
+      <button class="ai-option" data-ai="gpt" data-category="writing">
+        <span class="ai-mark" style="--c:#74AA9C">G</span>
+        <span class="ai-info"><span class="ai-name">GPT-5</span><span class="ai-vendor">OpenAI</span></span>
+      </button>
+      <button class="ai-option" data-ai="gemini" data-category="productivity">
+        <span class="ai-mark" style="--c:#4285F4">G</span>
+        <span class="ai-info"><span class="ai-name">Gemini</span><span class="ai-vendor">Google</span></span>
+      </button>
+      <button class="ai-option" data-ai="llama" data-category="coding">
+        <span class="ai-mark" style="--c:#0866FF">L</span>
+        <span class="ai-info"><span class="ai-name">Llama</span><span class="ai-vendor">Meta</span></span>
+      </button>
+      <button class="ai-option" data-ai="mistral" data-category="coding">
+        <span class="ai-mark" style="--c:#FF7000">M</span>
+        <span class="ai-info"><span class="ai-name">Mistral</span><span class="ai-vendor">Mistral AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="grok" data-category="research">
+        <span class="ai-mark" style="--c:#E5E5E5">X</span>
+        <span class="ai-info"><span class="ai-name">Grok</span><span class="ai-vendor">xAI</span></span>
+      </button>
+      <button class="ai-option" data-ai="perplexity" data-category="research">
+        <span class="ai-mark" style="--c:#20B8CD">P</span>
+        <span class="ai-info"><span class="ai-name">Perplexity</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="deepseek" data-category="coding">
+        <span class="ai-mark" style="--c:#4D6BFE">D</span>
+        <span class="ai-info"><span class="ai-name">DeepSeek</span><span class="ai-vendor">DeepSeek AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="cohere" data-category="business">
+        <span class="ai-mark" style="--c:#39594D">C</span>
+        <span class="ai-info"><span class="ai-name">Command</span><span class="ai-vendor">Cohere</span></span>
+      </button>
+      <button class="ai-option" data-ai="ms-copilot" data-category="productivity">
+        <span class="ai-mark" style="--c:#0078D4">M</span>
+        <span class="ai-info"><span class="ai-name">Copilot</span><span class="ai-vendor">Microsoft</span></span>
+      </button>
+      <button class="ai-option" data-ai="gh-copilot" data-category="coding">
+        <span class="ai-mark" style="--c:#24292E">G</span>
+        <span class="ai-info"><span class="ai-name">GitHub Copilot</span><span class="ai-vendor">GitHub</span></span>
+      </button>
+      <button class="ai-option" data-ai="notion-ai" data-category="productivity">
+        <span class="ai-mark" style="--c:#1a1a1a">N</span>
+        <span class="ai-info"><span class="ai-name">Notion AI</span><span class="ai-vendor">Notion</span></span>
+      </button>
+      <button class="ai-option" data-ai="notebooklm" data-category="research">
+        <span class="ai-mark" style="--c:#886FBF">N</span>
+        <span class="ai-info"><span class="ai-name">NotebookLM</span><span class="ai-vendor">Google</span></span>
+      </button>
+      <button class="ai-option" data-ai="elicit" data-category="research">
+        <span class="ai-mark" style="--c:#3C7A6E">E</span>
+        <span class="ai-info"><span class="ai-name">Elicit</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="consensus" data-category="research">
+        <span class="ai-mark" style="--c:#3B82F6">C</span>
+        <span class="ai-info"><span class="ai-name">Consensus</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="scite" data-category="research">
+        <span class="ai-mark" style="--c:#F2545B">S</span>
+        <span class="ai-info"><span class="ai-name">Scite</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="semantic-scholar" data-category="research">
+        <span class="ai-mark" style="--c:#1857B6">S</span>
+        <span class="ai-info"><span class="ai-name">Semantic Scholar</span><span class="ai-vendor">AI2</span></span>
+      </button>
+      <button class="ai-option" data-ai="researchrabbit" data-category="research">
+        <span class="ai-mark" style="--c:#6E56CF">R</span>
+        <span class="ai-info"><span class="ai-name">ResearchRabbit</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="scholarcy" data-category="research">
+        <span class="ai-mark" style="--c:#F5A623">S</span>
+        <span class="ai-info"><span class="ai-name">Scholarcy</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="explainpaper" data-category="education">
+        <span class="ai-mark" style="--c:#5B8DEF">E</span>
+        <span class="ai-info"><span class="ai-name">Explainpaper</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="humata" data-category="productivity">
+        <span class="ai-mark" style="--c:#7C5CFC">H</span>
+        <span class="ai-info"><span class="ai-name">Humata</span><span class="ai-vendor">Docs AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="chatpdf" data-category="productivity">
+        <span class="ai-mark" style="--c:#E4483C">C</span>
+        <span class="ai-info"><span class="ai-name">ChatPDF</span><span class="ai-vendor">Docs AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="otter" data-category="productivity">
+        <span class="ai-mark" style="--c:#1E88E5">O</span>
+        <span class="ai-info"><span class="ai-name">Otter.ai</span><span class="ai-vendor">Meetings</span></span>
+      </button>
+      <button class="ai-option" data-ai="fireflies" data-category="productivity">
+        <span class="ai-mark" style="--c:#F26D6D">F</span>
+        <span class="ai-info"><span class="ai-name">Fireflies</span><span class="ai-vendor">Meetings</span></span>
+      </button>
+      <button class="ai-option" data-ai="jasper" data-category="marketing">
+        <span class="ai-mark" style="--c:#FF5C83">J</span>
+        <span class="ai-info"><span class="ai-name">Jasper</span><span class="ai-vendor">Writing</span></span>
+      </button>
+      <button class="ai-option" data-ai="copyai" data-category="marketing">
+        <span class="ai-mark" style="--c:#3F3FF3">C</span>
+        <span class="ai-info"><span class="ai-name">Copy.ai</span><span class="ai-vendor">Writing</span></span>
+      </button>
+      <button class="ai-option" data-ai="writesonic" data-category="marketing">
+        <span class="ai-mark" style="--c:#3ABEEF">W</span>
+        <span class="ai-info"><span class="ai-name">Writesonic</span><span class="ai-vendor">Writing</span></span>
+      </button>
+      <button class="ai-option" data-ai="grammarly" data-category="writing">
+        <span class="ai-mark" style="--c:#15C39A">G</span>
+        <span class="ai-info"><span class="ai-name">Grammarly</span><span class="ai-vendor">Writing</span></span>
+      </button>
+      <button class="ai-option" data-ai="deepl" data-category="writing">
+        <span class="ai-mark" style="--c:#0F2B46">D</span>
+        <span class="ai-info"><span class="ai-name">DeepL</span><span class="ai-vendor">Translation</span></span>
+      </button>
+      <button class="ai-option" data-ai="midjourney" data-category="image">
+        <span class="ai-mark" style="--c:#1a1a1a">M</span>
+        <span class="ai-info"><span class="ai-name">Midjourney</span><span class="ai-vendor">Image</span></span>
+      </button>
+      <button class="ai-option" data-ai="dalle" data-category="image">
+        <span class="ai-mark" style="--c:#10A37F">D</span>
+        <span class="ai-info"><span class="ai-name">DALL·E</span><span class="ai-vendor">OpenAI</span></span>
+      </button>
+      <button class="ai-option" data-ai="stable-diffusion" data-category="image">
+        <span class="ai-mark" style="--c:#F97316">S</span>
+        <span class="ai-info"><span class="ai-name">Stable Diffusion</span><span class="ai-vendor">Stability AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="runway" data-category="video">
+        <span class="ai-mark" style="--c:#000000">R</span>
+        <span class="ai-info"><span class="ai-name">Runway</span><span class="ai-vendor">Video</span></span>
+      </button>
+      <button class="ai-option" data-ai="elevenlabs" data-category="voice">
+        <span class="ai-mark" style="--c:#0F1115">E</span>
+        <span class="ai-info"><span class="ai-name">ElevenLabs</span><span class="ai-vendor">Voice</span></span>
+      </button>
+      <button class="ai-option" data-ai="synthesia" data-category="video">
+        <span class="ai-mark" style="--c:#2E3AF2">S</span>
+        <span class="ai-info"><span class="ai-name">Synthesia</span><span class="ai-vendor">Video</span></span>
+      </button>
+      <button class="ai-option" data-ai="zapier-ai" data-category="automation">
+        <span class="ai-mark" style="--c:#FF4A00">Z</span>
+        <span class="ai-info"><span class="ai-name">Zapier AI</span><span class="ai-vendor">Automation</span></span>
+      </button>
+      <button class="ai-option" data-ai="glean" data-category="business">
+        <span class="ai-mark" style="--c:#5B4CF5">G</span>
+        <span class="ai-info"><span class="ai-name">Glean</span><span class="ai-vendor">Workspace search</span></span>
+      </button>
+      <button class="ai-option" data-ai="harvey" data-category="business">
+        <span class="ai-mark" style="--c:#1F2A44">H</span>
+        <span class="ai-info"><span class="ai-name">Harvey</span><span class="ai-vendor">Legal AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="you" data-category="research">
+        <span class="ai-mark" style="--c:#0F9D58">Y</span>
+        <span class="ai-info"><span class="ai-name">You.com</span><span class="ai-vendor">Search AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="poe" data-category="productivity">
+        <span class="ai-mark" style="--c:#8A2BE2">P</span>
+        <span class="ai-info"><span class="ai-name">Poe</span><span class="ai-vendor">Quora</span></span>
+      </button>
+      <button class="ai-option" data-ai="claude-code" data-category="coding">
+        <span class="ai-mark" style="--c:#D97757">C</span>
+        <span class="ai-info"><span class="ai-name">Claude Code</span><span class="ai-vendor">Anthropic</span></span>
+      </button>
+      <button class="ai-option" data-ai="suno" data-category="music">
+        <span class="ai-mark" style="--c:#FF6B9D">S</span>
+        <span class="ai-info"><span class="ai-name">Suno</span><span class="ai-vendor">Music</span></span>
+      </button>
+      <button class="ai-option" data-ai="uizard" data-category="design">
+        <span class="ai-mark" style="--c:#7C3AED">U</span>
+        <span class="ai-info"><span class="ai-name">Uizard</span><span class="ai-vendor">App design</span></span>
+      </button>
+    </div>
+
+    <!-- Detail view: shown after picking one AI -->
+    <div class="ai-detail" id="aiDetail">
+      <button class="detail-back" id="detailBackBtn">← Back to list</button>
+
+      <div class="detail-head">
+        <span class="ai-mark detail-mark" id="detailMark"></span>
+        <div>
+          <p class="detail-name" id="detailName"></p>
+          <p class="detail-vendor" id="detailVendor"></p>
+        </div>
+      </div>
+
+      <div class="detail-block">
+        <p class="detail-label">How it works</p>
+        <p class="detail-text" id="detailHow"></p>
+      </div>
+
+      <div class="detail-block">
+        <p class="detail-label">Why choose it</p>
+        <p class="detail-text" id="detailWhy"></p>
+      </div>
+
+      <!-- Performance reviews: comments from people who actually used this AI -->
+      <div class="detail-block detail-reviews">
+        <div class="review-heading-row">
+          <p class="detail-label">Performance reviews</p>
+          <span class="review-summary" id="reviewSummary"></span>
+        </div>
+
+        <div class="review-list" id="reviewList"></div>
+
+        <div class="review-form">
+          <div class="star-input" id="starInput" data-rating="0">
+            <button type="button" class="star" data-value="1" aria-label="1 star">★</button>
+            <button type="button" class="star" data-value="2" aria-label="2 stars">★</button>
+            <button type="button" class="star" data-value="3" aria-label="3 stars">★</button>
+            <button type="button" class="star" data-value="4" aria-label="4 stars">★</button>
+            <button type="button" class="star" data-value="5" aria-label="5 stars">★</button>
+          </div>
+          <textarea class="review-input" id="reviewInput" placeholder="Used this AI? Share how it performed…"></textarea>
+          <button class="btn-solid review-submit" id="postReviewBtn">Post review</button>
+        </div>
+      </div>
+
+      <button class="btn-solid modal-continue" id="requestSelectBtn">Choose this AI</button>
+
+      <div class="confirm-box" id="confirmBox">
+        <p class="confirm-text" id="confirmText">Are you sure you want to choose this AI?</p>
+        <div class="confirm-actions">
+          <button class="btn-ghost" id="confirmNoBtn">Cancel</button>
+          <button class="btn-solid" id="confirmYesBtn">Yes, choose it</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Request a quote modal -->
+<div class="modal-overlay" id="quoteOverlay">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="quoteTitle">
+    <button class="modal-close" id="quoteCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <p class="modal-eyebrow">Let's talk</p>
+    <h2 class="modal-title" id="quoteTitle">Request a quote</h2>
+    <p class="modal-subtext">Tell us about your project and we'll get back to you with a plan.</p>
+
+    <form class="quote-form" id="quoteForm">
+      <div class="form-row">
+        <label for="qName">Name</label>
+        <input type="text" id="qName" name="name" required placeholder="Jane Doe">
+      </div>
+
+      <div class="form-row">
+        <label for="qCompany">Company</label>
+        <input type="text" id="qCompany" name="company" required placeholder="Acme Inc.">
+      </div>
+
+      <div class="form-row-split">
+        <div class="form-row">
+          <label for="qEmail">Email</label>
+          <input type="email" id="qEmail" name="email" required placeholder="jane@acme.com">
+        </div>
+        <div class="form-row">
+          <label for="qPhone">Phone</label>
+          <input type="tel" id="qPhone" name="phone" required placeholder="+1 555 000 0000">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="qService">Service you want to use AI for</label>
+        <select id="qService" name="service" required>
+          <option value="" disabled selected>Select a service</option>
+          <option value="code-review">Code review & agentic development</option>
+          <option value="research">Research & knowledge search</option>
+          <option value="content">Content & copywriting</option>
+          <option value="automation">Workflow automation</option>
+          <option value="data-analysis">Data analysis</option>
+          <option value="customer-support">Customer support</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="qProject">Project title</label>
+        <input type="text" id="qProject" name="project" required placeholder="e.g. AI-assisted onboarding flow">
+      </div>
+
+      <button type="submit" class="btn-quote quote-submit">Submit request</button>
+    </form>
+
+    <div class="quote-success" id="quoteSuccess">
+      <p>Thanks — your request has been sent. We'll be in touch shortly.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Share a project modal -->
+<div class="modal-overlay" id="shareOverlay">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <button class="modal-close" id="shareCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <p class="modal-eyebrow">Community</p>
+    <h2 class="modal-title" id="shareTitle">Share your project</h2>
+    <p class="modal-subtext">Show what you built with AI. Once it's up, people can comment on the work.</p>
+
+    <form class="quote-form" id="shareForm">
+      <div class="form-row">
+        <label for="pTitle">Project title</label>
+        <input type="text" id="pTitle" name="title" required placeholder="e.g. Weekly customer digest">
+      </div>
+
+      <div class="form-row">
+        <label for="pAuthor">Your name</label>
+        <input type="text" id="pAuthor" name="author" required placeholder="Jane Doe">
+      </div>
+
+      <div class="form-row">
+        <label for="pAi">AI you used</label>
+        <select id="pAi" name="ai" required>
+          <option value="" disabled selected>Select an AI</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="pDescription">What did it do?</label>
+        <textarea id="pDescription" name="description" class="comment-input" required placeholder="Describe what you built and how the AI was involved…"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label for="pLink">Link <span class="optional-tag">(optional)</span></label>
+        <input type="url" id="pLink" name="link" placeholder="https://…">
+      </div>
+
+      <button type="submit" class="btn-quote quote-submit">Share project</button>
+    </form>
+
+    <div class="quote-success" id="shareSuccess">
+      <p>Thanks — your project is live in the community section.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Project detail modal: full write-up + comments on the work -->
+<div class="modal-overlay" id="projectOverlay">
+  <div class="modal-panel project-panel" role="dialog" aria-modal="true" aria-labelledby="projectDetailTitle">
+    <button class="modal-close" id="projectCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <span class="project-ai-pill" id="projectAiPill"></span>
+    <h2 class="modal-title" id="projectDetailTitle"></h2>
+    <p class="modal-subtext" id="projectAuthorLine"></p>
+    <p class="detail-text project-full-desc" id="projectDetailDesc"></p>
+    <a href="#" target="_blank" rel="noopener" class="project-link" id="projectDetailLink">View project ↗</a>
+
+    <div class="comment-section project-comment-section">
+      <p class="comment-heading">Comments on this work</p>
+
+      <div class="comment-form">
+        <div class="avatar">YO</div>
+        <div class="comment-input-wrap">
+          <textarea class="comment-input" id="projectCommentInput" placeholder="What do you think of this project?"></textarea>
+          <div class="comment-form-actions">
+            <button class="btn-solid" id="postProjectCommentBtn">Post</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="comment-list" id="projectCommentList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Agent: a scripted onboarding guide that walks people through
+     using DINASTY (goal picker, reviews, community, quotes). It's a
+     canned/rule-based helper, not a live model — it only ever answers
+     from the fixed set of platform topics below. -->
+<div class="modal-overlay" id="agentOverlay">
+  <div class="modal-panel agent-panel" role="dialog" aria-modal="true" aria-labelledby="agentTitle">
+    <button class="modal-close" id="agentCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <div class="agent-header">
+      <span class="ai-mark agent-mark">D</span>
+      <div>
+        <p class="agent-title" id="agentTitle">DINASTY Guide</p>
+        <p class="agent-status"><span class="pulse-dot agent-status-dot"></span>Here to help you get started</p>
+      </div>
+    </div>
+
+    <div class="agent-messages" id="agentMessages"></div>
+
+    <div class="agent-quick-replies" id="agentQuickReplies"></div>
+
+    <div class="agent-input-row">
+      <input type="text" id="agentInput" class="agent-input" placeholder="Ask anything…">
+      <button class="btn-solid agent-send" id="agentSendBtn">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DOCS MODAL ==================== -->
+<div class="docs-overlay" id="docsOverlay">
+
+  <div class="docs-panel">
+
+    <!-- Header -->
+    <div class="docs-header">
+
+      <div>
+        <p class="docs-eyebrow">DINASTY AI KNOWLEDGE CENTER</p>
+        <h2 class="docs-title">Documentation</h2>
+        <p class="docs-intro">
+          Learn how AI works, discover powerful tools, and understand
+          which AI solution is right for your goals.
+        </p>
+      </div>
+
+      <button class="docs-close" id="docsCloseBtn" aria-label="Close">
+        ×
+      </button>
+
+    </div>
+
+
+    <!-- Documentation Categories -->
+    <div class="docs-grid">
+
+      <!-- Documentation -->
+      <button class="docs-card" data-doc="documentation">
+
+        <div class="docs-icon">📖</div>
+
+        <div>
+          <h3>Documentation</h3>
+
+          <p>
+            Learn how DINASTY works and how to discover, evaluate,
+            and use AI tools effectively.
+          </p>
+
+          <span class="docs-link">
+            Explore documentation →
+          </span>
+        </div>
+
+      </button>
+
+
+      <!-- AI Learning -->
+      <button class="docs-card" data-doc="learning">
+
+        <div class="docs-icon">🧠</div>
+
+        <div>
+          <h3>AI Learning</h3>
+
+          <p>
+            Understand AI concepts from the basics to generative AI,
+            AI agents, prompting, and responsible AI.
+          </p>
+
+          <span class="docs-link">
+            Start learning →
+          </span>
+        </div>
+
+      </button>
+
+
+      <!-- Tool Guides -->
+      <button class="docs-card" data-doc="guides">
+
+        <div class="docs-icon">🛠️</div>
+
+        <div>
+          <h3>Tool Guides</h3>
+
+          <p>
+            Learn how to use AI tools for writing, coding, design,
+            research, video, productivity, and more.
+          </p>
+
+          <span class="docs-link">
+            View tool guides →
+          </span>
+        </div>
+
+      </button>
+
+
+      <!-- Comparisons -->
+      <button class="docs-card" data-doc="comparisons">
+
+        <div class="docs-icon">⚖️</div>
+
+        <div>
+          <h3>Comparisons</h3>
+
+          <p>
+            Compare AI tools by features, use cases, pricing,
+            strengths, limitations, and ease of use.
+          </p>
+
+          <span class="docs-link">
+            Compare AI tools →
+          </span>
+        </div>
+
+      </button>
+
+    </div>
+
+
+    <!-- Popular Topics -->
+    <div class="docs-popular">
+
+      <div class="docs-section-heading">
+        <span>POPULAR TOPICS</span>
+      </div>
+
+      <div class="docs-topic-grid">
+
+        <button class="docs-topic">
+          What is Generative AI?
+        </button>
+
+        <button class="docs-topic">
+          What are AI Agents?
+        </button>
+
+        <button class="docs-topic">
+          Prompt Engineering
+        </button>
+
+        <button class="docs-topic">
+          AI for Coding
+        </button>
+
+        <button class="docs-topic">
+          AI for Design
+        </button>
+
+        <button class="docs-topic">
+          AI for Research
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- Detailed Content -->
+    <div class="docs-detail" id="docsDetail">
+
+      <button class="docs-back" id="docsBackBtn">
+        ← Back to Docs
+      </button>
+
+      <div class="docs-detail-content">
+
+        <span class="docs-detail-icon" id="docsDetailIcon">
+          📖
+        </span>
+
+        <p class="docs-detail-label" id="docsDetailLabel">
+          DOCUMENTATION
+        </p>
+
+        <h2 id="docsDetailTitle">
+          Documentation
+        </h2>
+
+        <p id="docsDetailText">
+          Learn how DINASTY works and how to discover AI tools.
+        </p>
+
+        <div id="docsDetailSections"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+<div class="docs-tools" id="docsTools"></div>
+<div id="docsCategories"></div>
+
+<div id="docsTools"></div>
+<script>
+// ---------- Like button ----------
+const likeBtn = document.getElementById('likeBtn');
+const likeCount = document.getElementById('likeCount');
+let liked = false;
+const baseLikes = parseInt(likeCount.textContent, 10);
+
+likeBtn.addEventListener('click', () => {
+  liked = !liked;
+  likeBtn.classList.toggle('liked', liked);
+  likeCount.textContent = liked ? baseLikes + 1 : baseLikes;
+});
+
+// ---------- Comments (hero engagement bar) ----------
+const postCommentBtn = document.getElementById('postCommentBtn');
+const commentInput = document.getElementById('commentInput');
+const commentList = document.getElementById('commentList');
+const commentCount = document.getElementById('commentCount');
+
+function updateCommentCount() {
+  const count = commentList.querySelectorAll('.comment').length;
+  commentCount.textContent = `${count} comment${count === 1 ? '' : 's'}`;
+}
+
+postCommentBtn.addEventListener('click', () => {
+  const text = commentInput.value.trim();
+  if (!text) return;
+  const item = document.createElement('div');
+  item.className = 'comment';
+  item.innerHTML = `
+    <div class="avatar">YO</div>
+    <div class="comment-body">
+      <div class="comment-top">
+        <span class="comment-author">You</span>
+        <span class="comment-time">just now</span>
+      </div>
+      <p class="comment-text"></p>
+    </div>`;
+  item.querySelector('.comment-text').textContent = text;
+  commentList.prepend(item);
+  commentInput.value = '';
+  updateCommentCount();
+});
+
+// ---------- AI catalog info ----------
+// Base facts shown in the picker's detail view (how it works / why choose it).
+// A few entries also carry extended "guide" content (bestFor, guide.*) used by
+// the Docs tool pages further down this file.
+const AI_INFO = {
+  claude: {
+    name: "Claude", vendor: "Anthropic", category: "writing", url: "https://claude.ai",
+    how: "A large language model by Anthropic, strong at writing, reasoning, and following detailed instructions, with a large context window for long documents.",
+    why: "Best when you need careful reasoning, nuanced writing, or to work through long files safely.",
+    bestFor: ["Writing", "Research", "Analysis", "Brainstorming"],
+    guide: {
+      overview: "Claude can help users write, analyze information, summarize documents and reason through complex problems.",
+      gettingStarted: "Start with a clear request and provide the necessary context.",
+      tips: ["Give Claude enough context.", "Describe the desired output.", "Break complex tasks into smaller steps."]
+    }
+  },
+  gpt: { name: "GPT-5", vendor: "OpenAI", category: "writing", url: "https://chatgpt.com", how: "OpenAI's flagship model, good at general problem-solving, coding, and multimodal tasks like image understanding.", why: "A strong all-rounder with wide plugin and tool support." },
+  gemini: { name: "Gemini", vendor: "Google", category: "productivity", url: "https://gemini.google.com", how: "Google's model, tightly integrated with Search, Docs, and Google Workspace.", why: "Great if your work already lives in Gmail, Docs, or Sheets." },
+  llama: { name: "Llama", vendor: "Meta", category: "coding", url: "https://llama.meta.com", how: "Meta's open-weight model family that can run on your own infrastructure.", why: "Choose it for privacy, customization, or running models locally." },
+  mistral: { name: "Mistral", vendor: "Mistral AI", category: "coding", url: "https://mistral.ai", how: "A fast, efficient open-weight model line from Mistral AI.", why: "Good balance of speed and cost for lightweight tasks." },
+  grok: { name: "Grok", vendor: "xAI", category: "research", url: "https://x.ai/grok", how: "xAI's model, integrated with X (Twitter) for real-time trends and conversation.", why: "Useful for real-time social context and casual research." },
+  perplexity: { name: "Perplexity", vendor: "Research", category: "research", url: "https://www.perplexity.ai", how: "An AI search engine that answers questions with cited sources pulled live from the web.", why: "Best for fast fact-finding with sources you can verify." },
+  deepseek: { name: "DeepSeek", vendor: "DeepSeek AI", category: "coding", url: "https://www.deepseek.com", how: "An open-weight reasoning-focused model known for strong performance on coding and math.", why: "Good low-cost option for technical and analytical tasks." },
+  cohere: { name: "Command", vendor: "Cohere", category: "business", url: "https://cohere.com", how: "Enterprise-focused language models built for retrieval and business search.", why: "Choose it for building search or Q&A over your own company data." },
+  "ms-copilot": { name: "Copilot", vendor: "Microsoft", category: "productivity", url: "https://copilot.microsoft.com", how: "Microsoft's assistant embedded across Word, Excel, and Teams.", why: "Ideal if your workspace runs on Microsoft 365." },
+  "gh-copilot": { name: "GitHub Copilot", vendor: "GitHub", category: "coding", url: "https://github.com/features/copilot", how: "An AI pair programmer built into your code editor that suggests code as you type.", why: "Best for speeding up day-to-day coding inside your IDE." },
+  "notion-ai": { name: "Notion AI", vendor: "Notion", category: "productivity", url: "https://www.notion.com/product/ai", how: "An assistant built into Notion for drafting, summarizing, and organizing notes.", why: "Choose it if your docs and project notes already live in Notion." },
+  notebooklm: { name: "NotebookLM", vendor: "Google", category: "research", url: "https://notebooklm.google", how: "Google's research tool that answers questions grounded only in documents you upload.", why: "Great for deep research on a specific set of sources without hallucination risk." },
+  elicit: { name: "Elicit", vendor: "Research", category: "research", url: "https://elicit.com", how: "A research assistant that searches academic papers and extracts key findings into tables.", why: "Best for literature reviews and comparing study results." },
+  consensus: { name: "Consensus", vendor: "Research", category: "research", url: "https://consensus.app", how: "A search engine that finds and summarizes findings from peer-reviewed research.", why: "Good for quickly checking what science says about a claim." },
+  scite: { name: "Scite", vendor: "Research", category: "research", url: "https://scite.ai", how: "Shows how a paper has been cited elsewhere — supporting, contrasting, or just mentioning it.", why: "Useful for judging how reliable a research paper actually is." },
+  "semantic-scholar": { name: "Semantic Scholar", vendor: "AI2", category: "research", url: "https://www.semanticscholar.org", how: "An academic search engine with AI-generated summaries and citation graphs.", why: "Good free option for exploring a research field broadly." },
+  researchrabbit: { name: "ResearchRabbit", vendor: "Research", category: "research", url: "https://www.researchrabbit.ai", how: "Visualizes connections between papers and authors as an explorable network.", why: "Helpful for discovering related work you wouldn't find by keyword search." },
+  scholarcy: { name: "Scholarcy", vendor: "Research", category: "research", url: "https://www.scholarcy.com", how: "Automatically summarizes academic papers into short digestible briefs.", why: "Saves time when you need the gist of many papers quickly." },
+  explainpaper: { name: "Explainpaper", vendor: "Research", category: "education", url: "https://www.explainpaper.com", how: "Lets you highlight confusing parts of a paper and get a plain-language explanation.", why: "Good for reading dense papers outside your field." },
+  humata: { name: "Humata", vendor: "Docs AI", category: "productivity", url: "https://www.humata.ai", how: "Lets you chat with long PDFs and get answers with page citations.", why: "Useful for extracting answers from long reports or contracts." },
+  chatpdf: { name: "ChatPDF", vendor: "Docs AI", category: "productivity", url: "https://www.chatpdf.com", how: "A simple chat interface for asking questions about an uploaded PDF.", why: "Quick and lightweight for one-off document Q&A." },
+  otter: { name: "Otter.ai", vendor: "Meetings", category: "productivity", url: "https://otter.ai", how: "Transcribes meetings live and summarizes action items automatically.", why: "Best for teams that want searchable meeting notes." },
+  fireflies: { name: "Fireflies", vendor: "Meetings", category: "productivity", url: "https://fireflies.ai", how: "Records and transcribes calls, then syncs notes to your other apps.", why: "Good if you need meeting notes pushed into a CRM or task tool." },
+  jasper: { name: "Jasper", vendor: "Writing", category: "marketing", url: "https://www.jasper.ai", how: "A writing assistant tuned for marketing copy and brand voice.", why: "Choose it for on-brand marketing content at scale." },
+  copyai: { name: "Copy.ai", vendor: "Writing", category: "marketing", url: "https://www.copy.ai", how: "Generates marketing and sales copy from short prompts and templates.", why: "Fast for producing first drafts of ads or emails." },
+  writesonic: { name: "Writesonic", vendor: "Writing", category: "marketing", url: "https://writesonic.com", how: "An AI writer for blog posts, ads, and product descriptions.", why: "Good for high-volume content production." },
+  grammarly: { name: "Grammarly", vendor: "Writing", category: "writing", url: "https://www.grammarly.com", how: "Checks grammar, tone, and clarity as you write, across most apps.", why: "Best as a background editor rather than a content generator." },
+  deepl: { name: "DeepL", vendor: "Translation", category: "writing", url: "https://www.deepl.com", how: "A translation engine known for more natural phrasing than typical machine translation.", why: "Choose it when translation quality matters more than speed." },
+  midjourney: {
+    name: "Midjourney", vendor: "Midjourney", category: "image", url: "https://www.midjourney.com",
+    how: "Generates highly stylized images from text prompts.",
+    why: "Best for artistic or concept visuals.",
+    bestFor: ["Concept art", "Creative visuals", "Marketing images", "Design inspiration"],
+    guide: {
+      overview: "Midjourney generates images from natural-language descriptions.",
+      gettingStarted: "Write a prompt describing the subject, style, composition and desired visual characteristics.",
+      tips: ["Describe the subject clearly.", "Specify the visual style.", "Describe lighting and composition."]
+    }
+  },
+  dalle: { name: "DALL·E", vendor: "OpenAI", category: "image", url: "https://chatgpt.com", how: "OpenAI's image generator, integrated directly into ChatGPT.", why: "Convenient if you're already working inside ChatGPT." },
+  "stable-diffusion": { name: "Stable Diffusion", vendor: "Stability AI", category: "image", url: "https://stability.ai", how: "An open-weight image generator you can run and fine-tune yourself.", why: "Choose it for full control or running locally." },
+  runway: { name: "Runway", vendor: "Video", category: "video", url: "https://runwayml.com", how: "AI video generation and editing tools, including text-to-video.", why: "Best for quick video content or effects without a full production pipeline." },
+  elevenlabs: { name: "ElevenLabs", vendor: "Voice", category: "voice", url: "https://elevenlabs.io", how: "Generates realistic AI voices and can clone a voice from a sample.", why: "Good for voiceovers, narration, or accessibility features." },
+  synthesia: { name: "Synthesia", vendor: "Video", category: "video", url: "https://www.synthesia.io", how: "Turns text scripts into videos with an AI avatar presenter.", why: "Useful for training videos without filming anyone." },
+  "zapier-ai": { name: "Zapier AI", vendor: "Automation", category: "automation", url: "https://zapier.com/ai", how: "Connects your apps and uses AI to build automated workflows between them.", why: "Best for automating repetitive tasks across tools you already use." },
+  glean: { name: "Glean", vendor: "Workspace search", category: "business", url: "https://www.glean.com", how: "An AI search layer over your company's internal tools and documents.", why: "Choose it to find internal information fast across many apps." },
+  harvey: { name: "Harvey", vendor: "Legal AI", category: "business", url: "https://www.harvey.ai", how: "A legal-specific AI trained for contract review and legal research.", why: "Best for legal teams needing domain-specific accuracy." },
+  you: { name: "You.com", vendor: "Search AI", category: "research", url: "https://you.com", how: "A search engine with an AI assistant that cites its sources.", why: "Good alternative to traditional search with built-in summarization." },
+  poe: { name: "Poe", vendor: "Quora", category: "productivity", url: "https://poe.com", how: "A single app that gives access to many different AI models in one place.", why: "Useful if you want to compare answers from several models quickly." },
+  "claude-code": {
+    name: "Claude Code", vendor: "Anthropic", category: "coding", url: "https://claude.com/product/claude-code",
+    how: "An AI coding agent that can read, write and work with code in a project.",
+    why: "Best when you want an AI to work directly in your codebase, not just chat.",
+    bestFor: ["Coding", "Debugging", "Refactoring", "Codebase analysis"],
+    guide: {
+      overview: "Claude Code can work with an existing codebase and help developers understand, modify and create code.",
+      gettingStarted: "Open your project and give the agent a clear development task.",
+      tips: ["Describe the desired behavior.", "Give the agent relevant project context.", "Review generated code before applying changes."]
+    }
+  },
+  suno: { name: "Suno", vendor: "Music", category: "music", url: "https://suno.com", how: "Generates full songs — vocals, lyrics, and instrumentation — from a text prompt.", why: "Best for quickly producing original music without instruments or a studio." },
+  uizard: { name: "Uizard", vendor: "App design", category: "design", url: "https://uizard.io", how: "Turns sketches or text prompts into clickable app and website mockups.", why: "Choose it to go from idea to prototype fast, without a designer." }
+};
+
+function getAiInfo(key) {
+  return AI_INFO[key] || { name: key, vendor: "", how: "Details coming soon.", why: "Details coming soon.", category: "", url: null };
+}
+
+const CATEGORY_LABELS = {
+  writing: "Writing", image: "Image Generation", video: "Video", music: "Music",
+  coding: "Coding", productivity: "Productivity", education: "Education",
+  research: "Research", marketing: "Marketing", business: "Business",
+  automation: "Automation", voice: "Voice", design: "Design"
+};
+
+// The single best-fit AI shown immediately when someone picks a goal.
+// Change these keys to re-point a category at a different AI (must match an ai-option's data-ai).
+const CATEGORY_BEST = {
+  writing: "claude",
+  image: "midjourney",
+  video: "runway",
+  music: "suno",
+  coding: "claude-code",
+  productivity: "notion-ai",
+  education: "explainpaper",
+  research: "perplexity",
+  marketing: "jasper",
+  business: "glean",
+  automation: "zapier-ai",
+  voice: "elevenlabs",
+  design: "uizard"
+};
+
+let currentCategory = null;
+
+// ---------- AI performance reviews ----------
+// Comments people leave about how a specific AI actually performed for them,
+// shown on that AI's detail view inside the sign-in modal. Seeded with a
+// handful of examples; everything else starts empty ("be the first").
+const REVIEWS = {
+  claude: [
+    { author: "Wren D.", rating: 5, text: "Rewrote our onboarding docs in one pass — barely needed edits.", time: "3d ago" }
+  ],
+  "claude-code": [
+    { author: "Sam I.", rating: 5, text: "Refactored a gnarly auth module without breaking a single test.", time: "1w ago" },
+    { author: "Priya R.", rating: 4, text: "Great for small PRs, needs tighter guidance on large refactors.", time: "2w ago" }
+  ],
+  midjourney: [
+    { author: "Theo K.", rating: 5, text: "Turned around a full concept-art set for our pitch deck in an afternoon.", time: "4d ago" }
+  ],
+  perplexity: [
+    { author: "Nadia F.", rating: 4, text: "Sources are solid, though it occasionally misses the newest articles.", time: "6d ago" }
+  ]
+};
+
+function getReviews(aiKey) {
+  return REVIEWS[aiKey] || (REVIEWS[aiKey] = []);
+}
+
+function renderReviews(aiKey) {
+  const list = document.getElementById('reviewList');
+  const summary = document.getElementById('reviewSummary');
+  const reviews = getReviews(aiKey);
+
+  if (reviews.length === 0) {
+    summary.textContent = 'No reviews yet';
+    list.innerHTML = '<p class="review-empty">Be the first to say how it performed.</p>';
+    return;
+  }
+
+  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  summary.textContent = `${avg.toFixed(1)} ★ · ${reviews.length} review${reviews.length === 1 ? '' : 's'}`;
+
+  list.innerHTML = '';
+  reviews.forEach(r => {
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML = `
+      <div class="review-top">
+        <span class="comment-author">${r.author}</span>
+        <span class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+        <span class="comment-time">${r.time}</span>
+      </div>
+      <p class="comment-text"></p>`;
+    item.querySelector('.comment-text').textContent = r.text;
+    list.appendChild(item);
+  });
+}
+
+const starInput = document.getElementById('starInput');
+const reviewInput = document.getElementById('reviewInput');
+const postReviewBtn = document.getElementById('postReviewBtn');
+
+function setStarRating(value) {
+  starInput.dataset.rating = value;
+  starInput.querySelectorAll('.star').forEach(star => {
+    star.classList.toggle('filled', Number(star.dataset.value) <= value);
+  });
+}
+
+starInput.addEventListener('click', (e) => {
+  const star = e.target.closest('.star');
+  if (!star) return;
+  setStarRating(Number(star.dataset.value));
+});
+
+postReviewBtn.addEventListener('click', () => {
+  const text = reviewInput.value.trim();
+  const rating = Number(starInput.dataset.rating);
+  if (!text || !rating || !selectedAI) return;
+
+  getReviews(selectedAI).unshift({ author: 'You', rating, text, time: 'just now' });
+  renderReviews(selectedAI);
+  reviewInput.value = '';
+  setStarRating(0);
+});
+
+// ---------- Sign-in modal: browse by goal or search by name ----------
+const signInBtn = document.getElementById('signInBtn');
+const signInOverlay = document.getElementById('signInOverlay');
+const modalCloseBtn = document.getElementById('modalCloseBtn');
+const modalSubtext = document.getElementById('modalSubtext');
+const aiSearch = document.getElementById('aiSearch');
+const aiGrid = document.getElementById('aiGrid');
+const aiDetail = document.getElementById('aiDetail');
+const detailBackBtn = document.getElementById('detailBackBtn');
+const detailMark = document.getElementById('detailMark');
+const detailName = document.getElementById('detailName');
+const detailVendor = document.getElementById('detailVendor');
+const detailHow = document.getElementById('detailHow');
+const detailWhy = document.getElementById('detailWhy');
+const requestSelectBtn = document.getElementById('requestSelectBtn');
+const confirmBox = document.getElementById('confirmBox');
+const confirmText = document.getElementById('confirmText');
+const confirmYesBtn = document.getElementById('confirmYesBtn');
+const confirmNoBtn = document.getElementById('confirmNoBtn');
+
+let selectedAI = null;
+
+function filterGridByCategory(category) {
+  document.querySelectorAll('.ai-option').forEach(opt => {
+    const match = !category || opt.dataset.category === category;
+    opt.classList.toggle('hidden', !match);
+  });
+}
+
+function resetGridView() {
+  aiDetail.classList.remove('open');
+  aiGrid.classList.remove('hidden-view');
+  aiSearch.classList.remove('hidden-view');
+  confirmBox.classList.remove('open');
+}
+
+function openSignInModal(category) {
+  currentCategory = category || null;
+  aiSearch.value = '';
+  filterGridByCategory(currentCategory);
+  resetGridView();
+  signInOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  if (!currentCategory) {
+    modalSubtext.textContent = "Pick the model that powers your workspace. You can change this later in settings.";
+    return;
+  }
+
+  // Skip the browse step entirely: go straight to the recommended tool for this goal.
+  const bestKey = CATEGORY_BEST[currentCategory];
+  const bestOption = bestKey && aiGrid.querySelector(`.ai-option[data-ai="${bestKey}"]`);
+  const label = CATEGORY_LABELS[currentCategory];
+
+  if (bestOption) {
+    modalSubtext.textContent = `Here's the best fit for ${label}.`;
+    showDetail(bestOption);
+    detailBackBtn.textContent = `← See other ${label} tools`;
+  } else {
+    // Fallback: no mapped pick, show the filtered browse list instead.
+    modalSubtext.textContent = `Showing tools for ${label}. Pick the one that fits your project.`;
+  }
+}
+
+function closeSignInModal() {
+  signInOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+signInBtn.addEventListener('click', () => openSignInModal(null));
+modalCloseBtn.addEventListener('click', closeSignInModal);
+
+signInOverlay.addEventListener('click', (e) => {
+  if (e.target === signInOverlay) closeSignInModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && signInOverlay.classList.contains('open')) closeSignInModal();
+});
+
+// Search filters the grid by name/vendor
+aiSearch.addEventListener('input', () => {
+  const q = aiSearch.value.trim().toLowerCase();
+  document.querySelectorAll('.ai-option').forEach(opt => {
+    const name = opt.querySelector('.ai-name').textContent.toLowerCase();
+    const vendor = opt.querySelector('.ai-vendor').textContent.toLowerCase();
+    opt.classList.toggle('hidden', Boolean(q) && !name.includes(q) && !vendor.includes(q));
+  });
+});
+
+// Home category cards open the modal pre-filtered to that goal
+document.querySelectorAll('.category-card').forEach(card => {
+  card.addEventListener('click', () => openSignInModal(card.dataset.category));
+});
+
+// Product section CTAs
+const productQuoteBtn = document.getElementById('productQuoteBtn');
+const productTryBtn = document.getElementById('productTryBtn');
+if (productQuoteBtn) productQuoteBtn.addEventListener('click', () => requestQuoteBtn.click());
+if (productTryBtn) productTryBtn.addEventListener('click', () => openSignInModal(null));
+
+// Clicking an AI option opens its detail view
+function showDetail(option) {
+  selectedAI = option.dataset.ai;
+  const name = option.querySelector('.ai-name').textContent;
+  const vendor = option.querySelector('.ai-vendor').textContent;
+  const markStyle = option.querySelector('.ai-mark').getAttribute('style');
+  const markLetter = option.querySelector('.ai-mark').textContent;
+  const info = getAiInfo(selectedAI);
+
+  detailMark.setAttribute('style', markStyle);
+  detailMark.textContent = markLetter;
+  detailName.textContent = name;
+  detailVendor.textContent = vendor;
+  detailHow.textContent = info.how;
+  detailWhy.textContent = info.why;
+  confirmText.textContent = `This opens ${name}'s site in a new tab — continue?`;
+  confirmBox.classList.remove('open');
+
+  reviewInput.value = '';
+  setStarRating(0);
+  renderReviews(selectedAI);
+
+  aiGrid.classList.add('hidden-view');
+  aiSearch.classList.add('hidden-view');
+  aiDetail.classList.add('open');
+}
+
+aiGrid.addEventListener('click', (e) => {
+  const option = e.target.closest('.ai-option');
+  if (!option) return;
+  showDetail(option);
+  detailBackBtn.textContent = '← Back to list';
+});
+
+detailBackBtn.addEventListener('click', resetGridView);
+
+requestSelectBtn.addEventListener('click', () => {
+  confirmBox.classList.add('open');
+});
+
+confirmNoBtn.addEventListener('click', () => {
+  confirmBox.classList.remove('open');
+});
+
+confirmYesBtn.addEventListener('click', () => {
+  const info = getAiInfo(selectedAI);
+  confirmBox.classList.remove('open');
+  closeSignInModal();
+
+  if (info.url) {
+    window.open(info.url, '_blank', 'noopener,noreferrer');
+  } else {
+    console.warn('No destination URL configured for AI:', selectedAI);
+  }
+});
+
+// ---------- Request a quote modal ----------
+const requestQuoteBtn = document.getElementById('requestQuoteBtn');
+const quoteOverlay = document.getElementById('quoteOverlay');
+const quoteCloseBtn = document.getElementById('quoteCloseBtn');
+const quoteForm = document.getElementById('quoteForm');
+const quoteSuccess = document.getElementById('quoteSuccess');
+
+function openQuoteModal() {
+  quoteOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  quoteForm.style.display = '';
+  quoteSuccess.classList.remove('open');
+}
+
+function closeQuoteModal() {
+  quoteOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+requestQuoteBtn.addEventListener('click', openQuoteModal);
+quoteCloseBtn.addEventListener('click', closeQuoteModal);
+
+quoteOverlay.addEventListener('click', (e) => {
+  if (e.target === quoteOverlay) closeQuoteModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && quoteOverlay.classList.contains('open')) closeQuoteModal();
+});
+
+quoteForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(quoteForm).entries());
+  // Hook up real submission (API call / email service) here.
+  console.log('Quote request:', data);
+
+  quoteForm.style.display = 'none';
+  quoteSuccess.classList.add('open');
+  quoteForm.reset();
+});
+
+// ---------- AI Agent: real, model-backed onboarding guide ----------
+// This talks to a small backend (see server.js / README.md) that holds
+// the Anthropic API key server-side and proxies to Claude. The page has
+// to be SERVED by that backend (e.g. http://localhost:3000) — opening
+// index.html directly as a local file has nothing for this fetch to
+// reach, since there's no server to answer it.
+const agentOverlay = document.getElementById('agentOverlay');
+const agentCloseBtn = document.getElementById('agentCloseBtn');
+const agentMessages = document.getElementById('agentMessages');
+const agentQuickReplies = document.getElementById('agentQuickReplies');
+const agentInput = document.getElementById('agentInput');
+const agentSendBtn = document.getElementById('agentSendBtn');
+const aiAgentBtn = document.getElementById('aiAgentBtn');
+
+const AGENT_API_URL = '/api/agent-chat';
+
+const AGENT_STARTER_PROMPTS = [
+  'How do I find the right AI for my goal?',
+  'How do performance reviews work?',
+  "What's the Community section?",
+  'How do I request a quote?'
+];
+
+let agentStarted = false;
+let agentBusy = false;
+let agentHistory = []; // [{ role: 'user' | 'assistant', content: string }]
+
+function scrollAgentToBottom() {
+  agentMessages.scrollTop = agentMessages.scrollHeight;
+}
+
+function addAgentMessage(role, text) {
+  const bubble = document.createElement('div');
+  bubble.className = `agent-msg ${role}`;
+  bubble.textContent = text;
+  agentMessages.appendChild(bubble);
+  scrollAgentToBottom();
+  return bubble;
+}
+
+function showAgentTyping() {
+  const typing = document.createElement('div');
+  typing.className = 'agent-msg bot typing';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  agentMessages.appendChild(typing);
+  scrollAgentToBottom();
+  return typing;
+}
+
+function renderAgentStarters() {
+  agentQuickReplies.innerHTML = '';
+  AGENT_STARTER_PROMPTS.forEach(prompt => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quick-reply-btn';
+    btn.textContent = prompt;
+    btn.addEventListener('click', () => sendAgentMessage(prompt));
+    agentQuickReplies.appendChild(btn);
+  });
+}
+
+function renderAgentFollowUp() {
+  agentQuickReplies.innerHTML = '';
+  const moreBtn = document.createElement('button');
+  moreBtn.type = 'button';
+  moreBtn.className = 'quick-reply-btn';
+  moreBtn.textContent = 'Suggest a question';
+  moreBtn.addEventListener('click', renderAgentStarters);
+  agentQuickReplies.appendChild(moreBtn);
+}
+
+function setAgentInputEnabled(enabled) {
+  agentInput.disabled = !enabled;
+  agentSendBtn.disabled = !enabled;
+}
+
+async function sendAgentMessage(text) {
+  const trimmed = text.trim();
+  if (agentBusy || !trimmed) return;
+
+  agentBusy = true;
+  setAgentInputEnabled(false);
+  agentQuickReplies.innerHTML = '';
+
+  addAgentMessage('user', trimmed);
+  agentHistory.push({ role: 'user', content: trimmed });
+
+  const typing = showAgentTyping();
+
+  try {
+    const res = await fetch(AGENT_API_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ messages: agentHistory })
+    });
+
+    if (!res.ok) throw new Error(`Agent backend responded with ${res.status}`);
+
+    const data = await res.json();
+    typing.remove();
+
+    const reply = data.reply || "Sorry, I didn't get a reply that time — try again?";
+    addAgentMessage('bot', reply);
+    agentHistory.push({ role: 'assistant', content: reply });
+  } catch (err) {
+    typing.remove();
+    addAgentMessage(
+      'bot',
+      "I can't reach the AI backend right now. Make sure the server from README.md is running and you're viewing this page through it (e.g. http://localhost:3000), not opened as a local file."
+    );
+    console.error('Agent chat error:', err);
+  } finally {
+    agentBusy = false;
+    setAgentInputEnabled(true);
+    renderAgentFollowUp();
+    agentInput.focus();
+  }
+}
+
+function openAgentModal() {
+  agentOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  if (!agentStarted) {
+    agentStarted = true;
+    addAgentMessage('bot', "Hi! I'm the DINASTY guide. Ask me anything — about using this platform or anything else — or pick a question below to get started.");
+    renderAgentStarters();
+  }
+
+  agentInput.focus();
+}
+
+function closeAgentModal() {
+  agentOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+aiAgentBtn.addEventListener('click', openAgentModal);
+agentCloseBtn.addEventListener('click', closeAgentModal);
+agentOverlay.addEventListener('click', (e) => {
+  if (e.target === agentOverlay) closeAgentModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && agentOverlay.classList.contains('open')) closeAgentModal();
+});
+
+agentSendBtn.addEventListener('click', () => {
+  const text = agentInput.value;
+  agentInput.value = '';
+  sendAgentMessage(text);
+});
+agentInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const text = agentInput.value;
+    agentInput.value = '';
+    sendAgentMessage(text);
+  }
+});
+
+// ---------- Community: shared projects + comments on the work ----------
+const PROJECTS = [
+  {
+    id: 'proj-1',
+    title: 'Invoice reconciliation bot',
+    author: 'Dana M.',
+    aiKey: 'claude-code',
+    description: 'Built an agent that matches incoming invoices against POs and flags mismatches before they hit accounting.',
+    link: '',
+    comments: [
+      { author: 'Marcus T.', text: 'Saved our AP team hours every week.', time: '2d ago' }
+    ]
+  },
+  {
+    id: 'proj-2',
+    title: 'Spring launch key art',
+    author: 'Ines V.',
+    aiKey: 'midjourney',
+    description: 'Generated the full key-art series for our spring launch, then refined the picks in Photoshop.',
+    link: '',
+    comments: []
+  },
+  {
+    id: 'proj-3',
+    title: 'Weekly customer digest',
+    author: 'Owen P.',
+    aiKey: 'claude',
+    description: 'Drafts a plain-language summary of the week\'s support tickets every Monday morning, grouped by theme.',
+    link: '',
+    comments: [
+      { author: 'Leila S.', text: 'Reads like a person wrote it, not a bot.', time: '5d ago' }
+    ]
+  }
+];
+
+const projectGrid = document.getElementById('projectGrid');
+
+function renderProjectGrid() {
+  projectGrid.innerHTML = '';
+  PROJECTS.forEach(project => {
+    const info = getAiInfo(project.aiKey);
+    const card = document.createElement('button');
+    card.className = 'project-card';
+    card.dataset.projectId = project.id;
+    card.innerHTML = `
+      <div class="project-card-top">
+        <span class="ai-mark project-ai-mark">${info.name.charAt(0)}</span>
+        <span class="project-ai-name">${info.name}</span>
+      </div>
+      <h3 class="project-card-title"></h3>
+      <p class="project-card-desc"></p>
+      <div class="project-card-foot">
+        <span class="project-card-author"></span>
+        <span class="project-card-comments">${project.comments.length} comment${project.comments.length === 1 ? '' : 's'}</span>
+      </div>`;
+    card.querySelector('.project-card-title').textContent = project.title;
+    card.querySelector('.project-card-desc').textContent = project.description;
+    card.querySelector('.project-card-author').textContent = `by ${project.author}`;
+    card.addEventListener('click', () => openProjectModal(project.id));
+    projectGrid.appendChild(card);
+  });
+}
+
+// ---------- Project detail modal ----------
+const projectOverlay = document.getElementById('projectOverlay');
+const projectCloseBtn = document.getElementById('projectCloseBtn');
+const projectAiPill = document.getElementById('projectAiPill');
+const projectDetailTitle = document.getElementById('projectDetailTitle');
+const projectAuthorLine = document.getElementById('projectAuthorLine');
+const projectDetailDesc = document.getElementById('projectDetailDesc');
+const projectDetailLink = document.getElementById('projectDetailLink');
+const projectCommentList = document.getElementById('projectCommentList');
+const projectCommentInput = document.getElementById('projectCommentInput');
+const postProjectCommentBtn = document.getElementById('postProjectCommentBtn');
+
+let activeProjectId = null;
+
+function renderProjectComments(project) {
+  projectCommentList.innerHTML = '';
+  if (project.comments.length === 0) {
+    projectCommentList.innerHTML = '<p class="review-empty">No comments yet — say what you think.</p>';
+    return;
+  }
+  project.comments.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'comment';
+    item.innerHTML = `
+      <div class="avatar">${c.author.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
+      <div class="comment-body">
+        <div class="comment-top">
+          <span class="comment-author">${c.author}</span>
+          <span class="comment-time">${c.time}</span>
+        </div>
+        <p class="comment-text"></p>
+      </div>`;
+    item.querySelector('.comment-text').textContent = c.text;
+    projectCommentList.appendChild(item);
+  });
+}
+
+function openProjectModal(id) {
+  const project = PROJECTS.find(p => p.id === id);
+  if (!project) return;
+  activeProjectId = id;
+  const info = getAiInfo(project.aiKey);
+
+  projectAiPill.textContent = `Built with ${info.name}`;
+  projectDetailTitle.textContent = project.title;
+  projectAuthorLine.textContent = `by ${project.author}`;
+  projectDetailDesc.textContent = project.description;
+
+  if (project.link) {
+    projectDetailLink.href = project.link;
+    projectDetailLink.style.display = '';
+  } else {
+    projectDetailLink.style.display = 'none';
+  }
+
+  projectCommentInput.value = '';
+  renderProjectComments(project);
+
+  projectOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProjectModal() {
+  projectOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+  activeProjectId = null;
+}
+
+projectCloseBtn.addEventListener('click', closeProjectModal);
+projectOverlay.addEventListener('click', (e) => {
+  if (e.target === projectOverlay) closeProjectModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && projectOverlay.classList.contains('open')) closeProjectModal();
+});
+
+postProjectCommentBtn.addEventListener('click', () => {
+  const text = projectCommentInput.value.trim();
+  if (!text || !activeProjectId) return;
+  const project = PROJECTS.find(p => p.id === activeProjectId);
+  if (!project) return;
+
+  project.comments.unshift({ author: 'You', text, time: 'just now' });
+  renderProjectComments(project);
+  projectCommentInput.value = '';
+  renderProjectGrid(); // keep the grid's comment count in sync
+});
+
+// ---------- Share a project modal ----------
+const shareProjectBtn = document.getElementById('shareProjectBtn');
+const shareOverlay = document.getElementById('shareOverlay');
+const shareCloseBtn = document.getElementById('shareCloseBtn');
+const shareForm = document.getElementById('shareForm');
+const shareSuccess = document.getElementById('shareSuccess');
+const pAiSelect = document.getElementById('pAi');
+
+// Populate the "AI you used" dropdown from the full catalog, alphabetically by name.
+Object.keys(AI_INFO)
+  .sort((a, b) => AI_INFO[a].name.localeCompare(AI_INFO[b].name))
+  .forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = AI_INFO[key].name;
+    pAiSelect.appendChild(opt);
+  });
+
+function openShareModal() {
+  shareOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  shareForm.style.display = '';
+  shareSuccess.classList.remove('open');
+}
+
+function closeShareModal() {
+  shareOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+shareProjectBtn.addEventListener('click', openShareModal);
+shareCloseBtn.addEventListener('click', closeShareModal);
+shareOverlay.addEventListener('click', (e) => {
+  if (e.target === shareOverlay) closeShareModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && shareOverlay.classList.contains('open')) closeShareModal();
+});
+
+shareForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(shareForm).entries());
+
+  PROJECTS.unshift({
+    id: `proj-${Date.now()}`,
+    title: data.title,
+    author: data.author,
+    aiKey: data.ai,
+    description: data.description,
+    link: data.link || '',
+    comments: []
+  });
+
+  renderProjectGrid();
+
+  shareForm.style.display = 'none';
+  shareSuccess.classList.add('open');
+  shareForm.reset();
+
+  setTimeout(closeShareModal, 1400);
+});
+
+renderProjectGrid();
+// =========================================================
+// DOCUMENTATION
+// (no nav button links here anymore — kept so the feature still
+// works if something else opens it, e.g. openDocs() from elsewhere)
+// =========================================================
+
+const docsBtn = document.getElementById('docsBtn');
+
+const docsOverlay = document.getElementById('docsOverlay');
+
+const docsCloseBtn = document.getElementById('docsCloseBtn');
+
+const docsBackBtn = document.getElementById('docsBackBtn');
+
+const docsDetail = document.getElementById('docsDetail');
+
+const docsGrid = document.querySelector('.docs-grid');
+
+const docsPopular = document.querySelector('.docs-popular');
+
+const docsDetailIcon =
+  document.getElementById('docsDetailIcon');
+
+const docsDetailLabel =
+  document.getElementById('docsDetailLabel');
+
+const docsDetailTitle =
+  document.getElementById('docsDetailTitle');
+
+const docsDetailText =
+  document.getElementById('docsDetailText');
+
+const docsDetailSections =
+  document.getElementById('docsDetailSections');
+
+
+// ---------------------------------------------------------
+// Documentation content
+// ---------------------------------------------------------
+
+const DOCS_CONTENT = {
+
+  documentation: {
+
+    icon: "📖",
+
+    label: "DOCUMENTATION",
+
+    title: "Understand DINASTY",
+
+    description:
+      "Learn how DINASTY helps you discover, understand, and choose AI tools based on what you want to accomplish.",
+
+    sections: [
+
+      {
+        title: "Getting Started",
+
+        text:
+          "Start by choosing a goal such as writing, coding, research, design, productivity, or automation. DINASTY then helps you identify AI tools that match that goal."
+      },
+
+      {
+        title: "Discover AI Tools",
+
+        text:
+          "Explore AI tools by category instead of searching for a specific product name. This makes AI easier to understand for beginners and experienced users."
+      },
+
+      {
+        title: "Tool Profiles",
+
+        text:
+          "Each AI tool can be explained through what it does, how it works, what it is best for, and why you might choose it."
+      },
+
+      {
+        title: "AI Categories",
+
+        text:
+          "Explore AI across Writing, Image Generation, Video, Music, Coding, Productivity, Education, Research, Marketing, Business, Automation, Voice, and Design."
+      }
+
+    ]
+
+  },
+
+
+  learning: {
+
+    icon: "🧠",
+
+    label: "AI LEARNING",
+
+    title: "Learn Artificial Intelligence",
+
+    description:
+      "Build your understanding of AI from fundamental concepts to modern generative AI systems.",
+
+    sections: [
+
+      {
+        title: "AI Fundamentals",
+
+        text:
+          "Learn the basic ideas behind Artificial Intelligence, machine learning, models, data, and automated decision-making."
+      },
+
+      {
+        title: "Generative AI",
+
+        text:
+          "Understand how AI can generate text, images, audio, video, code, and other types of content from instructions or prompts."
+      },
+
+      {
+        title: "Prompt Engineering",
+
+        text:
+          "Learn how to communicate effectively with AI systems by writing clear instructions, providing context, defining constraints, and describing the desired result."
+      },
+
+      {
+        title: "AI Agents",
+
+        text:
+          "Understand how AI agents can use tools, reason through tasks, and perform multiple steps toward a goal."
+      },
+
+      {
+        title: "Responsible AI",
+
+        text:
+          "Learn about AI limitations, verification, privacy, bias, copyright, and responsible use of AI-generated information."
+      }
+
+    ]
+
+  },
+
+
+  guides: {
+
+    icon: "🛠️",
+
+    label: "TOOL GUIDES",
+
+    title: "Learn How to Use AI Tools",
+
+    description:
+      "Practical guides that help you understand what AI tools do and how to use them effectively.",
+
+    sections: [
+
+      {
+        title: "AI Writing Tools",
+
+        text:
+          "Learn how AI can help with articles, emails, summaries, brainstorming, rewriting, translation, and content creation."
+      },
+
+      {
+        title: "AI Coding Tools",
+
+        text:
+          "Discover how AI coding assistants can help generate code, explain code, debug problems, refactor projects, and accelerate development."
+      },
+
+      {
+        title: "AI Image Tools",
+
+        text:
+          "Learn how text-to-image systems work and how to create better prompts for illustrations, concepts, marketing visuals, and UI inspiration."
+      },
+
+      {
+        title: "AI Research Tools",
+
+        text:
+          "Learn how AI research assistants can help find information, summarize papers, organize sources, and explore a topic."
+      },
+
+      {
+        title: "AI Productivity Tools",
+
+        text:
+          "Discover how AI can summarize meetings, organize information, automate repetitive work, and assist with everyday tasks."
+      }
+
+    ]
+
+  },
+
+
+  comparisons: {
+
+    icon: "⚖️",
+
+    label: "AI COMPARISONS",
+
+    title: "Compare AI Tools",
+
+    description:
+      "Compare AI products based on their purpose, capabilities, usability, pricing, and strengths.",
+
+    sections: [
+
+      {
+        title: "Chat & Writing",
+
+        text:
+          "Compare general AI assistants and writing tools based on writing quality, reasoning, context handling, research capabilities, and workflow integration."
+      },
+
+      {
+        title: "Coding",
+
+        text:
+          "Compare AI coding assistants based on code generation, debugging, IDE integration, repository understanding, and developer workflow."
+      },
+
+      {
+        title: "Image Generation",
+
+        text:
+          "Compare image generation tools based on visual quality, prompt control, style, editing capabilities, and creative flexibility."
+      },
+
+      {
+        title: "Video",
+
+        text:
+          "Compare AI video platforms based on generation quality, editing features, avatars, animation, and production workflows."
+      },
+
+      {
+        title: "Research",
+
+        text:
+          "Compare AI research tools based on source quality, citations, academic coverage, summarization, and research workflows."
+      }
+
+    ]
+
+  }
+
+};
+
+
+// ---------------------------------------------------------
+// Open Docs
+// ---------------------------------------------------------
+
+function openDocs() {
+
+  docsOverlay.classList.add('open');
+
+  document.body.style.overflow = 'hidden';
+
+  showDocsHome();
+
+}
+
+
+// ---------------------------------------------------------
+// Close Docs
+// ---------------------------------------------------------
+
+function closeDocs() {
+
+  docsOverlay.classList.remove('open');
+
+  document.body.style.overflow = '';
+
+}
+
+
+// ---------------------------------------------------------
+// Show Docs homepage
+// ---------------------------------------------------------
+
+function showDocsHome() {
+
+  docsGrid.classList.remove('hidden');
+
+  docsPopular.classList.remove('hidden');
+
+  docsDetail.classList.remove('open');
+
+}
+
+
+// ---------------------------------------------------------
+// Show detailed documentation
+// ---------------------------------------------------------
+
+function showDocsDetail(type) {
+
+  const content = DOCS_CONTENT[type];
+
+  if (!content) return;
+
+
+  docsGrid.classList.add('hidden');
+
+  docsPopular.classList.add('hidden');
+
+  docsDetail.classList.add('open');
+
+
+  docsDetailIcon.textContent = content.icon;
+
+  docsDetailLabel.textContent = content.label;
+
+  docsDetailTitle.textContent = content.title;
+
+  docsDetailText.textContent = content.description;
+
+
+  docsDetailSections.innerHTML = '';
+
+
+  content.sections.forEach(section => {
+
+    const sectionElement =
+      document.createElement('div');
+
+    sectionElement.className =
+      'docs-content-section';
+
+
+    sectionElement.innerHTML = `
+
+      <h3>${section.title}</h3>
+
+      <p>
+        ${section.text}
+      </p>
+
+    `;
+
+
+    docsDetailSections.appendChild(sectionElement);
+
+  });
+
+}
+
+
+// ---------------------------------------------------------
+// Events
+// ---------------------------------------------------------
+
+if (docsBtn) {
+  docsBtn.addEventListener('click', (event) => {
+
+    event.preventDefault();
+
+    openDocs();
+
+  });
+}
+
+
+if (docsCloseBtn) docsCloseBtn.addEventListener('click', closeDocs);
+
+
+if (docsBackBtn) docsBackBtn.addEventListener('click', showDocsHome);
+
+
+// Click outside the Docs window
+
+if (docsOverlay) {
+  docsOverlay.addEventListener('click', (event) => {
+
+    if (event.target === docsOverlay) {
+
+      closeDocs();
+
+    }
+
+  });
+}
+
+
+// Escape key
+
+document.addEventListener('keydown', (event) => {
+
+  if (
+    docsOverlay &&
+    event.key === 'Escape' &&
+    docsOverlay.classList.contains('open')
+  ) {
+
+    closeDocs();
+
+  }
+
+});
+
+
+// Documentation category cards
+
+document.querySelectorAll('.docs-card').forEach(card => {
+
+  card.addEventListener('click', () => {
+
+    const type = card.dataset.doc;
+
+    showDocsDetail(type);
+
+  });
+
+});
+const docsTools = document.getElementById('docsTools');
+function renderToolsByCategory(category) {
+
+  docsTools.innerHTML = '';
+
+  const tools = document.querySelectorAll('.ai-option');
+
+  tools.forEach(tool => {
+
+    if (tool.dataset.category !== category) {
+      return;
+    }
+
+    const aiKey = tool.dataset.ai;
+
+    const info = AI_INFO[aiKey];
+
+    if (!info) return;
+
+    const card = document.createElement('button');
+
+    card.className = 'docs-tool-card';
+
+    card.dataset.ai = aiKey;
+
+    card.innerHTML = `
+
+      <div class="docs-tool-icon">
+        ${info.name.charAt(0)}
+      </div>
+
+      <div class="docs-tool-info">
+
+        <h3>
+          ${info.name}
+        </h3>
+
+        <span>
+          ${info.vendor}
+        </span>
+
+        <p>
+          ${info.how}
+        </p>
+
+      </div>
+
+      <div class="docs-tool-arrow">
+        →
+      </div>
+
+    `;
+
+    card.addEventListener('click', () => {
+
+      openToolDocumentation(aiKey);
+
+    });
+
+    docsTools.appendChild(card);
+
+  });
+
+}
+function openToolDocumentation(aiKey) {
+
+  const info = AI_INFO[aiKey];
+
+  if (!info) {
+    return;
+  }
+
+  docsGrid.classList.add('hidden');
+  docsPopular.classList.add('hidden');
+
+  docsDetail.classList.add('open');
+
+  docsDetailIcon.textContent =
+    info.name.charAt(0);
+
+  docsDetailLabel.textContent =
+    `${CATEGORY_LABELS[info.category]} GUIDE`;
+
+  docsDetailTitle.textContent =
+    info.name;
+
+  docsDetailText.textContent =
+    info.how;
+
+
+  docsDetailSections.innerHTML = `
+
+    <div class="docs-content-section">
+
+      <h3>
+        Why use ${info.name}?
+      </h3>
+
+      <p>
+        ${info.why}
+      </p>
+
+    </div>
+
+
+    <div class="docs-content-section">
+
+      <h3>
+        Best for
+      </h3>
+
+      <div class="docs-content-list">
+
+        ${
+          info.bestFor
+            ? info.bestFor
+                .map(item => `<span>${item}</span>`)
+                .join('')
+            : '<span>Information coming soon.</span>'
+        }
+
+      </div>
+
+    </div>
+
+
+    ${
+      info.guide
+      ? `
+
+        <div class="docs-content-section">
+
+          <h3>
+            Overview
+          </h3>
+
+          <p>
+            ${info.guide.overview}
+          </p>
+
+        </div>
+
+
+        <div class="docs-content-section">
+
+          <h3>
+            Getting Started
+          </h3>
+
+          <p>
+            ${info.guide.gettingStarted}
+          </p>
+
+        </div>
+
+
+        <div class="docs-content-section">
+
+          <h3>
+            Tips
+          </h3>
+
+          <div class="docs-content-list">
+
+            ${
+              info.guide.tips
+                .map(tip => `<span>${tip}</span>`)
+                .join('')
+            }
+
+          </div>
+
+        </div>
+
+      `
+      : ''
+    }
+
+  `;
+
+}
+function renderDocCategories() {
+
+  const container =
+    document.getElementById('docsCategories');
+
+  container.innerHTML = '';
+
+  Object.entries(CATEGORY_LABELS).forEach(
+    ([key, label]) => {
+
+      const button =
+        document.createElement('button');
+
+      button.className =
+        'docs-category';
+
+      button.textContent =
+        label;
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          renderToolsByCategory(key);
+
+        }
+      );
+
+      container.appendChild(button);
+
+    }
+  );
+
+}
+
+</script>
+</body>
+</html>

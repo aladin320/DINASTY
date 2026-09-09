@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DINASTY — AI changing Software Development</title>
+<meta name="description" content="DINASTY matches your goal to the right AI tool in seconds — a curated catalog of 46 AI tools, picked by what you're trying to do, not by name.">
+<meta property="og:title" content="DINASTY — AI changing Software Development">
+<meta property="og:description" content="Pick your goal, get the single best-fit AI tool with a plain explanation of why — from a curated catalog of 46 tools.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%238FBFA3'/%3E%3Cstop offset='100%25' stop-color='%233E5A4C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' fill='%230F1513' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600;1,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <div class="logo-mark">D</div>
+    <div class="logo-title">DIN<span>A</span>STY</div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#categoriesSection" id="homeLink">Home</a></li>
+    <li><a href="#productSection">Product</a></li>
+    <li><a href="#communitySection">Community</a></li>
+    <li><a href="#" id="docsBtn">Docs</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn-ghost" id="signInBtn">Sign in</button>
+    <button class="btn-solid agent-trigger" id="aiAgentBtn">
+      <span class="agent-trigger-dot"></span>
+      AI Agent
+    </button>
+    <button class="btn-quote" id="requestQuoteBtn">Request a quote</button>
+  </div>
+</nav>
+
+<div class="stage">
+  <div style="width:100%;">
+    <div class="eyebrow"><span>Built for engineering teams</span></div>
+
+    <div class="device-wrap">
+      <div class="device">
+        <div class="device-bar">
+          <span class="device-dot"></span>
+          <span class="device-dot"></span>
+          <span class="device-dot"></span>
+          <span class="device-path">dinasty.dev / future-of-code</span>
+        </div>
+
+        <div class="screen">
+          <!-- Ambient hero robot: built as layered SVG (not a flat image) so the
+               head and torso/arms can be animated completely independently.
+               Sits behind the grain overlay and all content via stacking order
+               (it's painted first and carries no z-index above them); the
+               whole layer is pointer-events:none so it never blocks clicks. -->
+          <div class="hero-robot-wrap" aria-hidden="true">
+            <div class="hero-robot-glow"></div>
+
+            <svg class="hero-robot" viewBox="0 0 360 460" xmlns="http://www.w3.org/2000/svg" focusable="false">
+              <defs>
+                <linearGradient id="robotGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#8FBFA3" stop-opacity="0.55"/>
+                  <stop offset="55%" stop-color="#8B7CF6" stop-opacity="0.45"/>
+                  <stop offset="100%" stop-color="#5CC8E0" stop-opacity="0.4"/>
+                </linearGradient>
+                <linearGradient id="visorGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#BFAFFF"/>
+                  <stop offset="100%" stop-color="#7DE0F0"/>
+                </linearGradient>
+                <filter id="robotBloomFilter" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="9"/>
+                </filter>
+              </defs>
+
+              <!-- soft blurred bloom, painted first so it sits behind the crisp outline -->
+              <g class="robot-bloom" filter="url(#robotBloomFilter)">
+                <g class="robot-torso">
+                  <circle cx="98" cy="232" r="28" fill="url(#robotGrad)"/>
+                  <circle cx="262" cy="232" r="28" fill="url(#robotGrad)"/>
+                  <rect x="108" y="210" width="144" height="170" rx="42" fill="url(#robotGrad)"/>
+                  <line x1="100" y1="234" x2="248" y2="352" stroke="url(#robotGrad)" stroke-width="32" stroke-linecap="round"/>
+                  <line x1="260" y1="234" x2="112" y2="352" stroke="url(#robotGrad)" stroke-width="32" stroke-linecap="round"/>
+                </g>
+                <g class="robot-head">
+                  <rect x="163" y="188" width="34" height="22" rx="6" fill="url(#robotGrad)"/>
+                  <rect x="130" y="95" width="100" height="95" rx="32" fill="url(#robotGrad)"/>
+                  <circle cx="126" cy="138" r="9" fill="url(#robotGrad)"/>
+                  <circle cx="234" cy="138" r="9" fill="url(#robotGrad)"/>
+                </g>
+              </g>
+
+              <!-- crisp outline, on top of the bloom -->
+              <g class="robot-crisp">
+                <g class="robot-torso">
+                  <circle cx="98" cy="232" r="28" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>
+                  <circle cx="262" cy="232" r="28" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>
+                  <rect x="108" y="210" width="144" height="170" rx="42" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>
+                  <line x1="100" y1="234" x2="248" y2="352" stroke="url(#robotGrad)" stroke-width="30" stroke-linecap="round"/>
+                  <line x1="260" y1="234" x2="112" y2="352" stroke="url(#robotGrad)" stroke-width="30" stroke-linecap="round"/>
+                  <circle cx="180" cy="295" r="16" fill="rgba(10,14,12,.4)" stroke="url(#visorGrad)" stroke-width="2"/>
+                  <circle cx="180" cy="295" r="6" fill="url(#visorGrad)"/>
+                </g>
+                <g class="robot-head">
+                  <rect x="163" y="188" width="34" height="22" rx="6" fill="url(#robotGrad)" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+                  <rect x="130" y="95" width="100" height="95" rx="32" fill="url(#robotGrad)" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>
+                  <circle cx="126" cy="138" r="9" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+                  <circle cx="234" cy="138" r="9" fill="url(#robotGrad)" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+                  <rect x="147" y="124" width="66" height="20" rx="10" fill="url(#visorGrad)" opacity="0.85"/>
+                  <line x1="180" y1="95" x2="180" y2="75" stroke="url(#visorGrad)" stroke-width="3" stroke-linecap="round"/>
+                  <circle cx="180" cy="70" r="5" fill="url(#visorGrad)"/>
+                </g>
+              </g>
+            </svg>
+
+            <div class="hero-scanline"></div>
+
+            <div class="hero-particles">
+              <span class="particle"></span>
+              <span class="particle"></span>
+              <span class="particle"></span>
+              <span class="particle"></span>
+              <span class="particle"></span>
+              <span class="particle"></span>
+            </div>
+          </div>
+
+          <div class="screen-grain"></div>
+
+          <div class="content-left">
+            <h1 class="headline">
+              <span class="green">AI changing</span><br>
+              <span class="gray">Software Development</span>
+            </h1>
+            <p class="subtext">
+              From autocomplete to autonomous agents — see how AI is reshaping the way teams plan, write, and ship code, one commit at a time.
+            </p>
+            <div class="mini-stats">
+              <div><strong>3.4x</strong><span>Faster shipping</span></div>
+              <div><strong>40%</strong><span>Fewer bugs</span></div>
+              <div><strong>12k+</strong><span>Teams onboard</span></div>
+            </div>
+          </div>
+
+          <div class="content-right">
+            <div class="image-frame">
+              <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80" alt="Developer working with code on screen">
+              <div class="profile-card">
+                <div class="avatar">AZ</div>
+                <div class="profile-meta">
+                  <p class="name">Aladin Zihindula</p>
+                  <p class="role">Lead AI Engineer</p>
+                </div>
+                <div class="pulse-dot"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="categories-wrap" id="categoriesSection">
+  <div class="categories">
+    <p class="categories-eyebrow">Start with your goal</p>
+    <h2 class="categories-title">What do you want to accomplish?</h2>
+    <p class="categories-subtext">Pick what you're trying to do — we'll show you the right tools. No need to know any AI by name.</p>
+
+    <div class="category-grid">
+      <button class="category-card" data-category="writing"><span class="cat-emoji">✍️</span><span class="cat-label">Writing</span></button>
+      <button class="category-card" data-category="image"><span class="cat-emoji">🎨</span><span class="cat-label">Image Generation</span></button>
+      <button class="category-card" data-category="video"><span class="cat-emoji">🎬</span><span class="cat-label">Video</span></button>
+      <button class="category-card" data-category="music"><span class="cat-emoji">🎵</span><span class="cat-label">Music</span></button>
+      <button class="category-card" data-category="dev-ai">
+        <span class="cat-emoji">💻</span>
+        <span class="cat-label">Dev AI</span>
+      </button>
+      <button class="category-card" data-category="productivity"><span class="cat-emoji">📊</span><span class="cat-label">Productivity</span></button>
+      <button class="category-card" data-category="education"><span class="cat-emoji">📚</span><span class="cat-label">Education</span></button>
+      <button class="category-card" data-category="research"><span class="cat-emoji">🧠</span><span class="cat-label">Research</span></button>
+      <button class="category-card" data-category="marketing"><span class="cat-emoji">📢</span><span class="cat-label">Marketing</span></button>
+      <button class="category-card" data-category="business"><span class="cat-emoji">💼</span><span class="cat-label">Business</span></button>
+      <button class="category-card" data-category="automation"><span class="cat-emoji">🤖</span><span class="cat-label">Automation</span></button>
+      <button class="category-card" data-category="voice"><span class="cat-emoji">🎙️</span><span class="cat-label">Voice</span></button>
+      <button class="category-card" data-category="design"><span class="cat-emoji">📱</span><span class="cat-label">Design</span></button>
+    </div>
+  </div>
+</div>
+<!-- ==================== DEV AI ==================== -->
+<div class="dev-ai-wrap" id="devAiSection">
+
+  <div class="dev-ai">
+
+    <div class="dev-ai-header">
+      <div>
+        <p class="dev-ai-eyebrow">DEV AI</p>
+
+        <h2 class="dev-ai-title">
+          AI for modern
+          <span>software development.</span>
+        </h2>
+
+        <p class="dev-ai-subtext">
+          Find the right AI tool for coding, debugging, testing,
+          code review, agents, DevOps and the entire development workflow.
+        </p>
+      </div>
+
+      <button class="btn-ghost" id="devAiBackBtn">
+        ← All AI categories
+      </button>
+    </div>
+
+
+    <!-- Developer categories -->
+    <div class="dev-category-grid" id="devCategoryGrid">
+
+      <button class="dev-category-card"
+              data-dev-category="coding-assistant">
+
+        <span class="dev-category-icon">💻</span>
+
+        <div>
+          <h3>AI Coding Assistants</h3>
+          <p>Write code faster with AI pair programmers.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="code-editor">
+
+        <span class="dev-category-icon">🖥️</span>
+
+        <div>
+          <h3>AI Code Editors</h3>
+          <p>Code inside intelligent AI-powered editors.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="debugging">
+
+        <span class="dev-category-icon">🐛</span>
+
+        <div>
+          <h3>AI Debugging</h3>
+          <p>Find errors and understand what went wrong.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="code-generation">
+
+        <span class="dev-category-icon">⚡</span>
+
+        <div>
+          <h3>Code Generation</h3>
+          <p>Turn requirements and prompts into code.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="code-review">
+
+        <span class="dev-category-icon">🔍</span>
+
+        <div>
+          <h3>AI Code Review</h3>
+          <p>Analyze quality, bugs, security and maintainability.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="agents">
+
+        <span class="dev-category-icon">🤖</span>
+
+        <div>
+          <h3>AI Agents</h3>
+          <p>Let AI work directly on your development tasks.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="terminal">
+
+        <span class="dev-category-icon">⌨️</span>
+
+        <div>
+          <h3>Terminal / CLI AI</h3>
+          <p>Use AI directly from your terminal.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="testing">
+
+        <span class="dev-category-icon">🧪</span>
+
+        <div>
+          <h3>AI Testing</h3>
+          <p>Generate tests and improve application quality.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="documentation">
+
+        <span class="dev-category-icon">📚</span>
+
+        <div>
+          <h3>AI Documentation</h3>
+          <p>Generate and maintain technical documentation.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+
+      <button class="dev-category-card"
+              data-dev-category="devops">
+
+        <span class="dev-category-icon">☁️</span>
+
+        <div>
+          <h3>DevOps / Cloud AI</h3>
+          <p>Use AI for infrastructure and cloud workflows.</p>
+        </div>
+
+        <span class="dev-arrow">→</span>
+      </button>
+
+    </div>
+
+
+    <!-- Developer AI results -->
+    <div class="dev-results" id="devResults">
+
+      <div class="dev-results-header">
+
+        <div>
+          <p class="dev-results-label">RECOMMENDED TOOLS</p>
+          <h3 id="devResultsTitle">AI Coding Assistants</h3>
+        </div>
+
+        <button class="btn-ghost" id="devResultsBack">
+          ← Categories
+        </button>
+
+      </div>
+
+      <div class="dev-tool-grid" id="devToolGrid"></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div class="product-wrap" id="productSection">
+  <div class="product">
+    <p class="product-eyebrow">Product</p>
+    <h2 class="product-title">Stop searching for AI tools.<br>Tell us what you want to do.</h2>
+    <p class="product-subtext">DINASTY matches your goal to the right AI in seconds — no need to know any tool by name, compare pricing pages, or guess what fits.</p>
+
+    <div class="product-grid">
+      <div class="product-feature">
+        <span class="feature-icon">🎯</span>
+        <h3>Goal-based discovery</h3>
+        <p>Pick from 13 goals — writing, coding, research, design, and more — instead of scrolling a wall of AI names you don't recognize.</p>
+      </div>
+      <div class="product-feature">
+        <span class="feature-icon">✅</span>
+        <h3>Curated catalog</h3>
+        <p>46 tools, hand-picked and organized by what they're actually good at — not a dumped directory of every AI product that exists.</p>
+      </div>
+      <div class="product-feature">
+        <span class="feature-icon">⚡</span>
+        <h3>Instant recommendation</h3>
+        <p>Choose a goal and we jump straight to the best-fit tool, with a plain explanation of how it works and why it's the right pick.</p>
+      </div>
+      <div class="product-feature">
+        <span class="feature-icon">👥</span>
+        <h3>Built for teams</h3>
+        <p>3.4x faster shipping and 40% fewer bugs across 12k+ teams already using DINASTY to bring AI into their workflow.</p>
+      </div>
+    </div>
+
+    <div class="product-cta">
+      <button class="btn-quote" id="productQuoteBtn">Request a quote</button>
+      <button class="btn-ghost" id="productTryBtn">Try it now</button>
+    </div>
+  </div>
+</div>
+
+<div class="engage-wrap">
+  <div class="engage">
+    <div class="engage-bar">
+      <button class="like-btn" id="likeBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
+        </svg>
+        <span id="likeCount">128</span>
+      </button>
+      <span class="comment-count" id="commentCount">6 comments</span>
+    </div>
+
+    <div class="comment-section">
+      <p class="comment-heading">Comments</p>
+
+      <div class="comment-form">
+        <div class="avatar">YO</div>
+        <div class="comment-input-wrap">
+          <textarea class="comment-input" id="commentInput" placeholder="Write a comment…"></textarea>
+          <div class="comment-form-actions">
+            <button class="btn-solid" id="postCommentBtn">Post</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="comment-list" id="commentList">
+        <div class="comment">
+          <div class="avatar">MK</div>
+          <div class="comment-body">
+            <div class="comment-top">
+              <span class="comment-author">Marie K.</span>
+              <span class="comment-time">2h ago</span>
+            </div>
+            <p class="comment-text">The 3.4x shipping stat matches what we're seeing on our own team since we adopted agentic reviews.</p>
+          </div>
+        </div>
+        <div class="comment">
+          <div class="avatar">TN</div>
+          <div class="comment-body">
+            <div class="comment-top">
+              <span class="comment-author">Tunde N.</span>
+              <span class="comment-time">5h ago</span>
+            </div>
+            <p class="comment-text">Curious how the 40% fewer bugs figure was measured — across which repo sizes?</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== COMMUNITY: performance talk lives on each AI's detail
+     view (in the sign-in modal). This section is for sharing finished
+     projects and getting comments on the work itself. ==================== -->
+<div class="community-wrap" id="communitySection">
+  <div class="community">
+    <p class="community-eyebrow">Community</p>
+    <h2 class="community-title">Projects people shipped with AI</h2>
+    <p class="community-subtext">Browse what others built, which tool they used, and what people are saying about it. Used an AI for something? Share it and get feedback.</p>
+
+    <div class="community-actions">
+      <button class="btn-quote" id="shareProjectBtn">Share your project</button>
+    </div>
+
+    <div class="project-grid" id="projectGrid"></div>
+  </div>
+</div>
+
+<!-- Sign-in modal: choose an AI by goal or by name -->
+<div class="modal-overlay" id="signInOverlay">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <p class="modal-eyebrow">Sign in to DINASTY</p>
+    <h2 class="modal-title" id="modalTitle">Choose your AI</h2>
+    <p class="modal-subtext" id="modalSubtext">Pick the model that powers your workspace. You can change this later in settings.</p>
+
+    <input type="text" class="ai-search" id="aiSearch" placeholder="Search AI tools…">
+
+    <div class="ai-grid" id="aiGrid">
+      <button class="ai-option" data-ai="claude" data-category="writing">
+        <span class="ai-mark" style="--c:#D97757">C</span>
+        <span class="ai-info"><span class="ai-name">Claude</span><span class="ai-vendor">Anthropic</span></span>
+      </button>
+      <button class="ai-option" data-ai="gpt" data-category="writing">
+        <span class="ai-mark" style="--c:#74AA9C">G</span>
+        <span class="ai-info"><span class="ai-name">GPT-5</span><span class="ai-vendor">OpenAI</span></span>
+      </button>
+      <button class="ai-option" data-ai="gemini" data-category="productivity">
+        <span class="ai-mark" style="--c:#4285F4">G</span>
+        <span class="ai-info"><span class="ai-name">Gemini</span><span class="ai-vendor">Google</span></span>
+      </button>
+      <button class="ai-option" data-ai="llama" data-category="coding">
+        <span class="ai-mark" style="--c:#0866FF">L</span>
+        <span class="ai-info"><span class="ai-name">Llama</span><span class="ai-vendor">Meta</span></span>
+      </button>
+      <button class="ai-option" data-ai="mistral" data-category="coding">
+        <span class="ai-mark" style="--c:#FF7000">M</span>
+        <span class="ai-info"><span class="ai-name">Mistral</span><span class="ai-vendor">Mistral AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="grok" data-category="research">
+        <span class="ai-mark" style="--c:#E5E5E5">X</span>
+        <span class="ai-info"><span class="ai-name">Grok</span><span class="ai-vendor">xAI</span></span>
+      </button>
+      <button class="ai-option" data-ai="perplexity" data-category="research">
+        <span class="ai-mark" style="--c:#20B8CD">P</span>
+        <span class="ai-info"><span class="ai-name">Perplexity</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="deepseek" data-category="coding">
+        <span class="ai-mark" style="--c:#4D6BFE">D</span>
+        <span class="ai-info"><span class="ai-name">DeepSeek</span><span class="ai-vendor">DeepSeek AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="cohere" data-category="business">
+        <span class="ai-mark" style="--c:#39594D">C</span>
+        <span class="ai-info"><span class="ai-name">Command</span><span class="ai-vendor">Cohere</span></span>
+      </button>
+      <button class="ai-option" data-ai="ms-copilot" data-category="productivity">
+        <span class="ai-mark" style="--c:#0078D4">M</span>
+        <span class="ai-info"><span class="ai-name">Copilot</span><span class="ai-vendor">Microsoft</span></span>
+      </button>
+      <button class="ai-option" data-ai="gh-copilot" data-category="coding">
+        <span class="ai-mark" style="--c:#24292E">G</span>
+        <span class="ai-info"><span class="ai-name">GitHub Copilot</span><span class="ai-vendor">GitHub</span></span>
+      </button>
+      <button class="ai-option" data-ai="cursor" data-category="coding">
+        <span class="ai-mark" style="--c:#111111">C</span>
+        <span class="ai-info"><span class="ai-name">Cursor</span><span class="ai-vendor">Anysphere</span></span>
+      </button>
+      <button class="ai-option" data-ai="windsurf" data-category="coding">
+        <span class="ai-mark" style="--c:#1B9AAA">W</span>
+        <span class="ai-info"><span class="ai-name">Windsurf</span><span class="ai-vendor">Windsurf</span></span>
+      </button>
+      <button class="ai-option" data-ai="zed" data-category="coding">
+        <span class="ai-mark" style="--c:#84A98C">Z</span>
+        <span class="ai-info"><span class="ai-name">Zed</span><span class="ai-vendor">Zed Industries</span></span>
+      </button>
+      <button class="ai-option" data-ai="notion-ai" data-category="productivity">
+        <span class="ai-mark" style="--c:#1a1a1a">N</span>
+        <span class="ai-info"><span class="ai-name">Notion AI</span><span class="ai-vendor">Notion</span></span>
+      </button>
+      <button class="ai-option" data-ai="notebooklm" data-category="research">
+        <span class="ai-mark" style="--c:#886FBF">N</span>
+        <span class="ai-info"><span class="ai-name">NotebookLM</span><span class="ai-vendor">Google</span></span>
+      </button>
+      <button class="ai-option" data-ai="elicit" data-category="research">
+        <span class="ai-mark" style="--c:#3C7A6E">E</span>
+        <span class="ai-info"><span class="ai-name">Elicit</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="consensus" data-category="research">
+        <span class="ai-mark" style="--c:#3B82F6">C</span>
+        <span class="ai-info"><span class="ai-name">Consensus</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="scite" data-category="research">
+        <span class="ai-mark" style="--c:#F2545B">S</span>
+        <span class="ai-info"><span class="ai-name">Scite</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="semantic-scholar" data-category="research">
+        <span class="ai-mark" style="--c:#1857B6">S</span>
+        <span class="ai-info"><span class="ai-name">Semantic Scholar</span><span class="ai-vendor">AI2</span></span>
+      </button>
+      <button class="ai-option" data-ai="researchrabbit" data-category="research">
+        <span class="ai-mark" style="--c:#6E56CF">R</span>
+        <span class="ai-info"><span class="ai-name">ResearchRabbit</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="scholarcy" data-category="research">
+        <span class="ai-mark" style="--c:#F5A623">S</span>
+        <span class="ai-info"><span class="ai-name">Scholarcy</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="explainpaper" data-category="education">
+        <span class="ai-mark" style="--c:#5B8DEF">E</span>
+        <span class="ai-info"><span class="ai-name">Explainpaper</span><span class="ai-vendor">Research</span></span>
+      </button>
+      <button class="ai-option" data-ai="humata" data-category="productivity">
+        <span class="ai-mark" style="--c:#7C5CFC">H</span>
+        <span class="ai-info"><span class="ai-name">Humata</span><span class="ai-vendor">Docs AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="chatpdf" data-category="productivity">
+        <span class="ai-mark" style="--c:#E4483C">C</span>
+        <span class="ai-info"><span class="ai-name">ChatPDF</span><span class="ai-vendor">Docs AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="otter" data-category="productivity">
+        <span class="ai-mark" style="--c:#1E88E5">O</span>
+        <span class="ai-info"><span class="ai-name">Otter.ai</span><span class="ai-vendor">Meetings</span></span>
+      </button>
+      <button class="ai-option" data-ai="fireflies" data-category="productivity">
+        <span class="ai-mark" style="--c:#F26D6D">F</span>
+        <span class="ai-info"><span class="ai-name">Fireflies</span><span class="ai-vendor">Meetings</span></span>
+      </button>
+      <button class="ai-option" data-ai="jasper" data-category="marketing">
+        <span class="ai-mark" style="--c:#FF5C83">J</span>
+        <span class="ai-info"><span class="ai-name">Jasper</span><span class="ai-vendor">Writing</span></span>
+      </button>
+      <button class="ai-option" data-ai="copyai" data-category="marketing">
+        <span class="ai-mark" style="--c:#3F3FF3">C</span>
+        <span class="ai-info"><span class="ai-name">Copy.ai</span><span class="ai-vendor">Writing</span></span>
+      </button>
+      <button class="ai-option" data-ai="writesonic" data-category="marketing">
+        <span class="ai-mark" style="--c:#3ABEEF">W</span>
+        <span class="ai-info"><span class="ai-name">Writesonic</span><span class="ai-vendor">Writing</span></span>
+      </button>
+      <button class="ai-option" data-ai="grammarly" data-category="writing">
+        <span class="ai-mark" style="--c:#15C39A">G</span>
+        <span class="ai-info"><span class="ai-name">Grammarly</span><span class="ai-vendor">Writing</span></span>
+      </button>
+      <button class="ai-option" data-ai="deepl" data-category="writing">
+        <span class="ai-mark" style="--c:#0F2B46">D</span>
+        <span class="ai-info"><span class="ai-name">DeepL</span><span class="ai-vendor">Translation</span></span>
+      </button>
+      <button class="ai-option" data-ai="midjourney" data-category="image">
+        <span class="ai-mark" style="--c:#1a1a1a">M</span>
+        <span class="ai-info"><span class="ai-name">Midjourney</span><span class="ai-vendor">Image</span></span>
+      </button>
+      <button class="ai-option" data-ai="dalle" data-category="image">
+        <span class="ai-mark" style="--c:#10A37F">D</span>
+        <span class="ai-info"><span class="ai-name">DALL·E</span><span class="ai-vendor">OpenAI</span></span>
+      </button>
+      <button class="ai-option" data-ai="stable-diffusion" data-category="image">
+        <span class="ai-mark" style="--c:#F97316">S</span>
+        <span class="ai-info"><span class="ai-name">Stable Diffusion</span><span class="ai-vendor">Stability AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="runway" data-category="video">
+        <span class="ai-mark" style="--c:#000000">R</span>
+        <span class="ai-info"><span class="ai-name">Runway</span><span class="ai-vendor">Video</span></span>
+      </button>
+      <button class="ai-option" data-ai="elevenlabs" data-category="voice">
+        <span class="ai-mark" style="--c:#0F1115">E</span>
+        <span class="ai-info"><span class="ai-name">ElevenLabs</span><span class="ai-vendor">Voice</span></span>
+      </button>
+      <button class="ai-option" data-ai="synthesia" data-category="video">
+        <span class="ai-mark" style="--c:#2E3AF2">S</span>
+        <span class="ai-info"><span class="ai-name">Synthesia</span><span class="ai-vendor">Video</span></span>
+      </button>
+      <button class="ai-option" data-ai="zapier-ai" data-category="automation">
+        <span class="ai-mark" style="--c:#FF4A00">Z</span>
+        <span class="ai-info"><span class="ai-name">Zapier AI</span><span class="ai-vendor">Automation</span></span>
+      </button>
+      <button class="ai-option" data-ai="glean" data-category="business">
+        <span class="ai-mark" style="--c:#5B4CF5">G</span>
+        <span class="ai-info"><span class="ai-name">Glean</span><span class="ai-vendor">Workspace search</span></span>
+      </button>
+      <button class="ai-option" data-ai="harvey" data-category="business">
+        <span class="ai-mark" style="--c:#1F2A44">H</span>
+        <span class="ai-info"><span class="ai-name">Harvey</span><span class="ai-vendor">Legal AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="you" data-category="research">
+        <span class="ai-mark" style="--c:#0F9D58">Y</span>
+        <span class="ai-info"><span class="ai-name">You.com</span><span class="ai-vendor">Search AI</span></span>
+      </button>
+      <button class="ai-option" data-ai="poe" data-category="productivity">
+        <span class="ai-mark" style="--c:#8A2BE2">P</span>
+        <span class="ai-info"><span class="ai-name">Poe</span><span class="ai-vendor">Quora</span></span>
+      </button>
+      <button class="ai-option" data-ai="claude-code" data-category="coding">
+        <span class="ai-mark" style="--c:#D97757">C</span>
+        <span class="ai-info"><span class="ai-name">Claude Code</span><span class="ai-vendor">Anthropic</span></span>
+      </button>
+      <button class="ai-option" data-ai="suno" data-category="music">
+        <span class="ai-mark" style="--c:#FF6B9D">S</span>
+        <span class="ai-info"><span class="ai-name">Suno</span><span class="ai-vendor">Music</span></span>
+      </button>
+      <button class="ai-option" data-ai="uizard" data-category="design">
+        <span class="ai-mark" style="--c:#7C3AED">U</span>
+        <span class="ai-info"><span class="ai-name">Uizard</span><span class="ai-vendor">App design</span></span>
+      </button>
+    </div>
+
+    <!-- Detail view: shown after picking one AI -->
+    <div class="ai-detail" id="aiDetail">
+      <button class="detail-back" id="detailBackBtn">← Back to list</button>
+
+      <div class="detail-head">
+        <span class="ai-mark detail-mark" id="detailMark"></span>
+        <div>
+          <p class="detail-name" id="detailName"></p>
+          <p class="detail-vendor" id="detailVendor"></p>
+        </div>
+      </div>
+
+      <div class="detail-block">
+        <p class="detail-label">How it works</p>
+        <p class="detail-text" id="detailHow"></p>
+      </div>
+
+      <div class="detail-block">
+        <p class="detail-label">Why choose it</p>
+        <p class="detail-text" id="detailWhy"></p>
+      </div>
+
+      <!-- Performance reviews: comments from people who actually used this AI -->
+      <div class="detail-block detail-reviews">
+        <div class="review-heading-row">
+          <p class="detail-label">Performance reviews</p>
+          <span class="review-summary" id="reviewSummary"></span>
+        </div>
+
+        <div class="review-list" id="reviewList"></div>
+
+        <div class="review-form">
+          <div class="star-input" id="starInput" data-rating="0">
+            <button type="button" class="star" data-value="1" aria-label="1 star">★</button>
+            <button type="button" class="star" data-value="2" aria-label="2 stars">★</button>
+            <button type="button" class="star" data-value="3" aria-label="3 stars">★</button>
+            <button type="button" class="star" data-value="4" aria-label="4 stars">★</button>
+            <button type="button" class="star" data-value="5" aria-label="5 stars">★</button>
+          </div>
+          <textarea class="review-input" id="reviewInput" placeholder="Used this AI? Share how it performed…"></textarea>
+          <button class="btn-solid review-submit" id="postReviewBtn">Post review</button>
+        </div>
+      </div>
+
+      <button class="btn-solid modal-continue" id="requestSelectBtn">Choose this AI</button>
+
+      <div class="confirm-box" id="confirmBox">
+        <p class="confirm-text" id="confirmText">Are you sure you want to choose this AI?</p>
+        <div class="confirm-actions">
+          <button class="btn-ghost" id="confirmNoBtn">Cancel</button>
+          <button class="btn-solid" id="confirmYesBtn">Yes, choose it</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Request a quote modal -->
+<div class="modal-overlay" id="quoteOverlay">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="quoteTitle">
+    <button class="modal-close" id="quoteCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <p class="modal-eyebrow">Let's talk</p>
+    <h2 class="modal-title" id="quoteTitle">Request a quote</h2>
+    <p class="modal-subtext">Tell us about your project and we'll get back to you with a plan.</p>
+
+    <form class="quote-form" id="quoteForm">
+      <div class="form-row">
+        <label for="qName">Name</label>
+        <input type="text" id="qName" name="name" required placeholder="Jane Doe">
+      </div>
+
+      <div class="form-row">
+        <label for="qCompany">Company</label>
+        <input type="text" id="qCompany" name="company" required placeholder="Acme Inc.">
+      </div>
+
+      <div class="form-row-split">
+        <div class="form-row">
+          <label for="qEmail">Email</label>
+          <input type="email" id="qEmail" name="email" required placeholder="jane@acme.com">
+        </div>
+        <div class="form-row">
+          <label for="qPhone">Phone</label>
+          <input type="tel" id="qPhone" name="phone" required placeholder="+1 555 000 0000">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="qService">Service you want to use AI for</label>
+        <select id="qService" name="service" required>
+          <option value="" disabled selected>Select a service</option>
+          <option value="code-review">Code review & agentic development</option>
+          <option value="research">Research & knowledge search</option>
+          <option value="content">Content & copywriting</option>
+          <option value="automation">Workflow automation</option>
+          <option value="data-analysis">Data analysis</option>
+          <option value="customer-support">Customer support</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="qProject">Project title</label>
+        <input type="text" id="qProject" name="project" required placeholder="e.g. AI-assisted onboarding flow">
+      </div>
+
+      <button type="submit" class="btn-quote quote-submit">Submit request</button>
+    </form>
+
+    <div class="quote-success" id="quoteSuccess">
+      <p>Thanks — your request has been sent. We'll be in touch shortly.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Share a project modal -->
+<div class="modal-overlay" id="shareOverlay">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <button class="modal-close" id="shareCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <p class="modal-eyebrow">Community</p>
+    <h2 class="modal-title" id="shareTitle">Share your project</h2>
+    <p class="modal-subtext">Show what you built with AI. Once it's up, people can comment on the work.</p>
+
+    <form class="quote-form" id="shareForm">
+      <div class="form-row">
+        <label for="pTitle">Project title</label>
+        <input type="text" id="pTitle" name="title" required placeholder="e.g. Weekly customer digest">
+      </div>
+
+      <div class="form-row">
+        <label for="pAuthor">Your name</label>
+        <input type="text" id="pAuthor" name="author" required placeholder="Jane Doe">
+      </div>
+
+      <div class="form-row">
+        <label for="pAi">AI you used</label>
+        <select id="pAi" name="ai" required>
+          <option value="" disabled selected>Select an AI</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="pDescription">What did it do?</label>
+        <textarea id="pDescription" name="description" class="comment-input" required placeholder="Describe what you built and how the AI was involved…"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label for="pLink">Link <span class="optional-tag">(optional)</span></label>
+        <input type="url" id="pLink" name="link" placeholder="https://…">
+      </div>
+
+      <button type="submit" class="btn-quote quote-submit">Share project</button>
+    </form>
+
+    <div class="quote-success" id="shareSuccess">
+      <p>Thanks — your project is live in the community section.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Project detail modal: full write-up + comments on the work -->
+<div class="modal-overlay" id="projectOverlay">
+  <div class="modal-panel project-panel" role="dialog" aria-modal="true" aria-labelledby="projectDetailTitle">
+    <button class="modal-close" id="projectCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <span class="project-ai-pill" id="projectAiPill"></span>
+    <h2 class="modal-title" id="projectDetailTitle"></h2>
+    <p class="modal-subtext" id="projectAuthorLine"></p>
+    <p class="detail-text project-full-desc" id="projectDetailDesc"></p>
+    <a href="#" target="_blank" rel="noopener" class="project-link" id="projectDetailLink">View project ↗</a>
+
+    <div class="comment-section project-comment-section">
+      <p class="comment-heading">Comments on this work</p>
+
+      <div class="comment-form">
+        <div class="avatar">YO</div>
+        <div class="comment-input-wrap">
+          <textarea class="comment-input" id="projectCommentInput" placeholder="What do you think of this project?"></textarea>
+          <div class="comment-form-actions">
+            <button class="btn-solid" id="postProjectCommentBtn">Post</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="comment-list" id="projectCommentList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Agent: a real, Claude-powered chat that answers whatever the
+     person asks — via /api/agent-chat, served by server.js. It knows
+     about DINASTY's real features but isn't limited to them. See
+     server.js and README.md for the backend that powers this. -->
+<div class="modal-overlay" id="agentOverlay">
+  <div class="modal-panel agent-panel" role="dialog" aria-modal="true" aria-labelledby="agentTitle">
+    <button class="modal-close" id="agentCloseBtn" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <div class="agent-header">
+      <span class="ai-mark agent-mark">D</span>
+      <div>
+        <p class="agent-title" id="agentTitle">DINASTY Guide</p>
+        <p class="agent-status"><span class="pulse-dot agent-status-dot"></span>Here to help you get started</p>
+      </div>
+    </div>
+
+    <div class="agent-messages" id="agentMessages"></div>
+
+    <div class="agent-quick-replies" id="agentQuickReplies"></div>
+
+    <div class="agent-input-row">
+      <input type="text" id="agentInput" class="agent-input" placeholder="Ask anything…">
+      <button class="btn-solid agent-send" id="agentSendBtn">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DOCS MODAL ==================== -->
+<div class="docs-overlay" id="docsOverlay">
+
+  <div class="docs-panel" role="dialog" aria-modal="true" aria-labelledby="docsTitle">
+
+    <!-- Header -->
+    <div class="docs-header">
+
+      <div>
+        <p class="docs-eyebrow">DINASTY AI KNOWLEDGE CENTER</p>
+        <h2 class="docs-title" id="docsTitle">Documentation</h2>
+        <p class="docs-intro">
+          Learn how AI works, discover powerful tools, and understand
+          which AI solution is right for your goals.
+        </p>
+      </div>
+
+      <button class="docs-close" id="docsCloseBtn" aria-label="Close">
+        ×
+      </button>
+
+    </div>
+
+
+    <!-- Documentation Categories -->
+    <div class="docs-grid">
+
+      <!-- Documentation -->
+      <button class="docs-card" data-doc="documentation">
+
+        <div class="docs-icon">📖</div>
+
+        <div>
+          <h3>Documentation</h3>
+
+          <p>
+            Learn how DINASTY works and how to discover, evaluate,
+            and use AI tools effectively.
+          </p>
+
+          <span class="docs-link">
+            Explore documentation →
+          </span>
+        </div>
+
+      </button>
+
+
+      <!-- AI Learning -->
+      <button class="docs-card" data-doc="learning">
+
+        <div class="docs-icon">🧠</div>
+
+        <div>
+          <h3>AI Learning</h3>
+
+          <p>
+            Understand AI concepts from the basics to generative AI,
+            AI agents, prompting, and responsible AI.
+          </p>
+
+          <span class="docs-link">
+            Start learning →
+          </span>
+        </div>
+
+      </button>
+
+
+      <!-- Tool Guides -->
+      <button class="docs-card" data-doc="guides">
+
+        <div class="docs-icon">🛠️</div>
+
+        <div>
+          <h3>Tool Guides</h3>
+
+          <p>
+            Learn how to use AI tools for writing, coding, design,
+            research, video, productivity, and more.
+          </p>
+
+          <span class="docs-link">
+            View tool guides →
+          </span>
+        </div>
+
+      </button>
+
+
+      <!-- Comparisons -->
+      <button class="docs-card" data-doc="comparisons">
+
+        <div class="docs-icon">⚖️</div>
+
+        <div>
+          <h3>Comparisons</h3>
+
+          <p>
+            Compare AI tools by features, use cases, pricing,
+            strengths, limitations, and ease of use.
+          </p>
+
+          <span class="docs-link">
+            Compare AI tools →
+          </span>
+        </div>
+
+      </button>
+
+    </div>
+
+
+    <!-- Popular Topics -->
+    <div class="docs-popular">
+
+      <div class="docs-section-heading">
+        <span>POPULAR TOPICS</span>
+      </div>
+
+      <div class="docs-topic-grid">
+
+        <button class="docs-topic">
+          What is Generative AI?
+        </button>
+
+        <button class="docs-topic">
+          What are AI Agents?
+        </button>
+
+        <button class="docs-topic">
+          Prompt Engineering
+        </button>
+
+        <button class="docs-topic">
+          AI for Coding
+        </button>
+
+        <button class="docs-topic">
+          AI for Design
+        </button>
+
+        <button class="docs-topic">
+          AI for Research
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- Detailed Content -->
+    <div class="docs-detail" id="docsDetail">
+
+      <button class="docs-back" id="docsBackBtn">
+        ← Back to Docs
+      </button>
+
+      <div class="docs-detail-content">
+
+        <span class="docs-detail-icon" id="docsDetailIcon">
+          📖
+        </span>
+
+        <p class="docs-detail-label" id="docsDetailLabel">
+          DOCUMENTATION
+        </p>
+
+        <h2 id="docsDetailTitle">
+          Documentation
+        </h2>
+
+        <p id="docsDetailText">
+          Learn how DINASTY works and how to discover AI tools.
+        </p>
+
+        <div id="docsDetailSections"></div>
+
+        <!-- Only populated for the "Tool Guides" page: pick a category,
+             browse its tools, open a tool's own doc page. -->
+        <div id="docsCategories"></div>
+        <div id="docsTools"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
