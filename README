@@ -12,6 +12,14 @@ on every page refresh) is now stored in a real SQLite database
 - Community projects and their comments
 - Hero-banner comments and the like counter
 - Quote requests submitted through "Request a quote"
+- Signed-in user identities (name and email)
+
+The database contains these application tables: `reviews`,
+`community_projects`, `project_comments`, `quote_requests`, `hero_likes`,
+`hero_comments`, and `users`. Existing databases using the earlier
+`ai_reviews` and `projects` names are migrated into the canonical tables when
+the server starts. The `ai_tools` table stores the catalog metadata used by
+the admin AI tools section.
 
 The AI catalog itself (the 46 tools, their descriptions, categories, etc.)
 stays as static config in `public/script.js` — it's app data the site
@@ -24,11 +32,15 @@ npm install
 cp .env.example .env
 ```
 
-Open `.env` and, optionally:
+Open `.env` and configure:
+- `PORT=3000` for the server port
+- `ADMIN_KEY` for the protected dashboard and admin endpoints
+- `DATABASE_URL=./dinasty.db` for the SQLite database file
 - add your `ANTHROPIC_API_KEY` to get real answers from the "AI Agent"
   chat button (it runs in a demo mode without one)
-- set `ADMIN_KEY` if you want to check submitted quote requests via
-  `GET /api/admin/quotes` (send it back as the `x-admin-key` header)
+- authenticate with `POST /api/admin/login` using `{key: ADMIN_KEY}`, then
+  send the real key as `x-admin-key: ADMIN_KEY` when calling
+  `GET /api/admin/quotes` or `GET /api/dashboard`
 
 ## Run
 
@@ -44,7 +56,7 @@ real server to answer it.
 
 ## Database
 
-- File: `dinasty.db` next to `db.js` (override with `DB_PATH` in `.env`)
+- File: `dinasty.db` next to `db.js` (configure the path with `DATABASE_URL` in `.env`)
 - On first run, a handful of demo reviews/projects/comments are seeded
   automatically so the site looks populated — same content that used to
   be hardcoded in the old version, just persisted now.
@@ -67,7 +79,25 @@ real server to answer it.
 | POST | `/api/hero/comments` | Add a hero comment `{author, text}` |
 | POST | `/api/hero/like` | Adjust the like counter `{liked: true\|false}` |
 | POST | `/api/quote` | Submit a quote request |
-| GET | `/api/admin/quotes` | List quote requests (needs `x-admin-key` header + `ADMIN_KEY` set) |
+| POST | `/api/auth/register` | Create a user `{name, email, password}` |
+| POST | `/api/auth/login` | Verify `{email, password}` and return a session token |
+| GET | `/api/user/dashboard` | Return the authenticated user's own activity |
+| POST | `/api/user/saved-tools` | Save an AI tool for the authenticated user |
+| DELETE | `/api/user/saved-tools/:aiKey` | Remove a saved AI tool |
+| POST | `/api/user/comparisons` | Save a comparison of AI tools |
+| POST | `/api/auth/logout` | End the authenticated user's session |
+| POST | `/api/admin/login` | Authenticate with `{key}` and receive a temporary admin session token |
+| GET | `/api/admin/quotes` | List quote requests (needs `x-admin-key`) |
+| PATCH | `/api/admin/reviews/:id` | Hide, show, or moderate a review |
+| DELETE | `/api/admin/reviews/:id` | Delete a review |
+| PATCH | `/api/admin/projects/:id` | Approve, unapprove, feature, or unfeature a project |
+| DELETE | `/api/admin/projects/:id` | Delete a project and its comments |
+| PATCH | `/api/admin/quotes/:id` | Change quote status or save a reply |
+| DELETE | `/api/admin/quotes/:id` | Delete a quote request |
+| GET | `/api/admin/ai-tools` | List AI tools |
+| POST | `/api/admin/ai-tools` | Add an AI tool with catalog metadata |
+| DELETE | `/api/admin/ai-tools/:id` | Delete an AI tool |
+| GET | `/api/dashboard` | Dashboard aggregates (needs `x-admin-key`) |
 | POST | `/api/agent-chat` | AI Agent chat backend |
 
 All endpoints validate their input server-side and return `400` on bad

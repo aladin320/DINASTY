@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DINASTY — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600;1,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ---------- Dashboard-only styles. Reuses the site's own tokens
+     (--sage, --ink, --line, --panel-2, --font-display, etc.) from
+     style.css so it matches the rest of DINASTY rather than introducing
+     a new color scheme. ---------- */
+
+  .dash-page{ max-width: 1180px; margin: 0 auto; padding: 40px 20px 80px; }
+  .dash-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom: 28px; }
+  .dash-eyebrow{ font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sage); margin: 0 0 8px; }
+  .dash-title{ font-family: var(--font-display); font-size: clamp(24px, 3.2vw, 34px); margin: 0; }
+  .dash-updated{ font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); display:flex; align-items:center; gap:7px; }
+  .dash-refresh, .dash-logout{
+    border: 1px solid var(--line); background: rgba(143,191,163,0.08); color: var(--sage);
+    border-radius: 7px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: var(--font-body); transition: border-color .15s ease;
+  }
+  .dash-logout{ background: none; color: var(--ink-faint); }
+  .dash-refresh:hover, .dash-logout:hover{ border-color: var(--sage-dim); }
+  .dash-refresh:disabled{ opacity: .5; cursor: default; }
+
+  /* ---------- Key gate ---------- */
+  .dash-gate{ max-width: 420px; margin: 80px auto; text-align: center; }
+  .dash-gate h2{ font-family: var(--font-display); font-size: 22px; margin: 0 0 8px; }
+  .dash-gate p{ color: var(--ink-dim); font-size: 14px; margin: 0 0 20px; line-height: 1.6; }
+  .dash-gate-row{ display:flex; gap:10px; }
+  .dash-gate input{
+    flex:1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+    color: var(--ink); padding: 10px 12px; font-family: var(--font-mono); font-size: 13px;
+  }
+  .dash-gate input:focus{ outline: none; border-color: var(--sage-dim); }
+  .dash-gate button{
+    border: none; background: var(--sage); color: #0F1513; font-weight: 600;
+    border-radius: 8px; padding: 10px 18px; font-size: 13.5px; cursor: pointer; font-family: var(--font-body);
+  }
+  .dash-gate-error{ color: #E17B6B; font-size: 13px; margin-top: 12px; min-height: 18px; }
+
+  /* ---------- Stat cards ---------- */
+  .dash-stats{ display:grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 24px; }
+  .dash-stat{
+    background: var(--bg-raised); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  .dash-stat:hover{ border-color: var(--sage-dim); transform: translateY(-2px); }
+  .dash-stat-icon{ font-size: 18px; margin-bottom: 6px; display:block; }
+  .dash-stat-label{ font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 6px; }
+  .dash-stat-value{ font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--ink); }
+  .dash-stat-value small{ font-size: 13px; color: var(--ink-faint); font-weight: 500; }
+
+  /* ---------- Panel grid ---------- */
+  .dash-grid{ display:grid; grid-template-columns: 1.1fr 1fr; gap: 18px; align-items: start; }
+  .dash-panel{
+    background: var(--bg-raised); border: 1px solid var(--line); border-left: 3px solid var(--dash-accent, var(--line));
+    border-radius: 14px; padding: 22px; transition: transform .15s ease;
+  }
+  .dash-panel:hover{ transform: translateY(-2px); }
+  .dash-panel h3{ font-family: var(--font-display); font-size: 15.5px; margin: 0 0 4px; }
+  .dash-panel-sub{ font-size: 12.5px; color: var(--ink-faint); margin: 0 0 18px; }
+
+  /* Bar chart (reviews per AI) */
+  .dash-bar-row{ display:flex; align-items:center; gap: 10px; margin-bottom: 10px; font-size: 12.5px; }
+  .dash-bar-label{ width: 110px; flex-shrink:0; color: var(--ink-dim); font-family: var(--font-mono); text-transform: capitalize; white-space: nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dash-bar-track{ flex:1; background: var(--panel-2); border-radius: 999px; height: 10px; overflow: hidden; }
+  .dash-bar-fill{ height:100%; background: var(--sage); border-radius: 999px; }
+  .dash-bar-count{ width: 60px; text-align:right; color: var(--ink-faint); font-family: var(--font-mono); flex-shrink:0; }
+
+  /* Donut (rating distribution) */
+  .dash-donut-wrap{ display:flex; align-items:center; gap: 22px; flex-wrap: wrap; }
+  .dash-donut-legend{ display:flex; flex-direction:column; gap:6px; font-size:12.5px; color: var(--ink-dim); }
+  .dash-donut-legend span{ display:flex; align-items:center; gap:8px; }
+  .dash-donut-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+  /* List panels (recent projects / quotes) */
+  .dash-list{ display:flex; flex-direction:column; gap: 12px; }
+  .dash-list-item{ padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .dash-list-item:last-child{ border-bottom:none; padding-bottom:0; }
+  .dash-list-top{ display:flex; justify-content:space-between; gap:10px; font-size: 13.5px; color: var(--ink); font-weight: 600; }
+  .dash-list-meta{ font-size:12px; color: var(--ink-faint); margin-top:2px; }
+  .dash-empty{ color: var(--ink-faint); font-size: 13px; }
+
+  .dash-service-list{ display:flex; flex-direction:column; gap:8px; margin-top: 14px; }
+  .dash-service-row{ display:flex; justify-content:space-between; font-size: 13px; color: var(--ink-dim); }
+  .dash-service-row b{ color: var(--ink); }
+
+  .dash-manage-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:18px; margin-top:18px; }
+  .dash-manage-list{ display:flex; flex-direction:column; gap:12px; }
+  .dash-manage-item{ border-bottom:1px solid var(--line); padding-bottom:12px; }
+  .dash-manage-item:last-child{ border-bottom:none; padding-bottom:0; }
+  .dash-manage-title{ color:var(--ink); font-size:13px; font-weight:600; margin:0 0 3px; }
+  .dash-manage-meta{ color:var(--ink-faint); font-size:11.5px; line-height:1.45; margin:0 0 8px; }
+  .dash-manage-actions{ display:flex; flex-wrap:wrap; gap:6px; }
+  .dash-manage-actions button{ border:1px solid var(--line); background:var(--panel-2); color:var(--ink-dim); border-radius:6px; padding:5px 8px; font:600 11px var(--font-body); cursor:pointer; }
+  .dash-manage-actions button:hover{ border-color:var(--sage-dim); color:var(--sage); }
+  .dash-manage-actions .danger:hover{ border-color:#E17B6B; color:#E17B6B; }
+  .dash-status{ color:var(--sage); text-transform:capitalize; }
+
+  @media (max-width: 900px){
+    .dash-stats{ grid-template-columns: repeat(3, 1fr); }
+    .dash-grid{ grid-template-columns: 1fr; }
+    .dash-manage-grid{ grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px){
+    .dash-stats{ grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <div class="logo-mark">D</div>
+    <div class="logo-title">DIN<span>A</span>STY</div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="architecture.html">Architecture</a></li>
+    <li><a href="UserDashboard.html">My dashboard</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="index.html" class="btn-ghost">← Back to site</a>
+  </div>
+</nav>
+
+<div class="dash-page">
+
+  <div class="dash-gate" id="dashGate">
+    <h2>Admin dashboard</h2>
+    <p>This shows real numbers from your database — reviews, community projects, and quote requests. Enter the <code>ADMIN_KEY</code> you set in your <code>.env</code> file to unlock it.</p>
+    <div class="dash-gate-row">
+      <input type="password" id="dashKeyInput" placeholder="Admin key" autocomplete="off">
+      <button id="dashUnlockBtn">Unlock</button>
+    </div>
+    <p class="dash-gate-error" id="dashGateError"></p>
+  </div>
+
+  <div id="dashBody" style="display:none;">
+    <div class="dash-head">
+      <div>
+        <p class="dash-eyebrow">Admin</p>
+        <h1 class="dash-title">Dashboard</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span class="dash-updated" id="dashUpdated"><span class="pulse-dot" style="position:static;"></span></span>
+        <button class="dash-refresh" id="dashRefreshBtn">Refresh</button>
+        <button class="dash-logout" id="dashLogoutBtn">Log out</button>
+      </div>
+    </div>
+
+    <div class="dash-stats" id="dashStats"></div>
+
+    <div class="dash-grid">
+      <div class="dash-panel" style="--dash-accent:#8FBFA3;">
+        <h3>Reviews by AI</h3>
+        <p class="dash-panel-sub">Number of performance reviews left per tool</p>
+        <div id="dashBarChart"></div>
+      </div>
+
+      <div class="dash-panel" style="--dash-accent:#7F77DD;">
+        <h3>Rating distribution</h3>
+        <p class="dash-panel-sub">All star ratings across every review</p>
+        <div class="dash-donut-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140" id="dashDonut"></svg>
+          <div class="dash-donut-legend" id="dashDonutLegend"></div>
+        </div>
+      </div>
+
+      <div class="dash-panel" style="--dash-accent:#8FBFA3;">
+        <h3>Recent community projects</h3>
+        <p class="dash-panel-sub">Latest projects shared, newest first</p>
+        <div class="dash-list" id="dashProjects"></div>
+      </div>
+
+      <div class="dash-panel" style="--dash-accent:#E17B6B;">
+        <h3>Recent quote requests</h3>
+        <p class="dash-panel-sub">Latest submissions from "Request a quote"</p>
+        <div class="dash-list" id="dashQuotes"></div>
+        <div class="dash-service-list" id="dashServices"></div>
+      </div>
+    </div>
+
+    <div class="dash-manage-grid">
+      <section class="dash-panel" style="--dash-accent:#E3A76B;">
+        <h3>Reviews</h3>
+        <p class="dash-panel-sub">View and moderate performance reviews</p>
+        <div class="dash-manage-list" id="dashReviewManagement"></div>
+      </section>
+      <section class="dash-panel" style="--dash-accent:#8FBFA3;">
+        <h3>Projects</h3>
+        <p class="dash-panel-sub">Approve, feature, or remove community work</p>
+        <div class="dash-manage-list" id="dashProjectManagement"></div>
+      </section>
+      <section class="dash-panel" style="--dash-accent:#E17B6B;">
+        <h3>Quotes</h3>
+        <p class="dash-panel-sub">Manage requests and customer replies</p>
+        <div class="dash-manage-list" id="dashQuoteManagement"></div>
+      </section>
+    </div>
+
+    <div class="dash-manage-grid">
+      <section class="dash-panel" style="--dash-accent:#7F77DD;">
+        <h3>Users</h3>
+        <p class="dash-panel-sub">Registered DINASTY accounts and roles</p>
+        <div class="dash-manage-list" id="dashUserManagement"></div>
+      </section>
+      <section class="dash-panel" style="--dash-accent:#5CC8E0;">
+        <h3>AI tools</h3>
+        <p class="dash-panel-sub">Tools represented in current activity</p>
+        <div class="dash-manage-list" id="dashToolManagement"></div>
+      </section>
+      <section class="dash-panel" style="--dash-accent:#E3C36B;">
+        <h3>Analytics</h3>
+        <p class="dash-panel-sub">Live totals from the database</p>
+        <div class="dash-manage-list" id="dashAnalyticsManagement"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY_STORAGE = 'dinasty_admin_key';
+const RATING_COLORS = ['#E17B6B', '#E3A76B', '#E3C36B', '#A9C98F', '#8FBFA3'];
+let currentAdminKey = null;
+
+function formatAiName(key) {
+  return key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function timeAgo(isoString) {
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+}
+
+async function loginAdmin(key) {
+  const res = await fetch('/api/admin/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ key })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed with ${res.status}`);
+  return data.token;
+}
+
+async function fetchDashboard(key) {
+  const res = await fetch('/api/dashboard', { headers: { 'x-admin-key': key } });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Request failed with ${res.status}`);
+  }
+  return res.json();
+}
+
+async function adminRequest(path, options = {}) {
+  const headers = { 'x-admin-key': currentAdminKey, ...(options.headers || {}) };
+  if (options.body) headers['content-type'] = 'application/json';
+  const res = await fetch(path, { ...options, headers });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Request failed with ${res.status}`);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+function actionButton(label, handler, danger = false) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  if (danger) button.className = 'danger';
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    try { await handler(); } catch (error) { alert(error.message); }
+    button.disabled = false;
+  });
+  return button;
+}
+
+function managementItem(title, meta, actions) {
+  const item = document.createElement('div');
+  item.className = 'dash-manage-item';
+  const titleEl = document.createElement('p');
+  titleEl.className = 'dash-manage-title';
+  titleEl.textContent = title;
+  const metaEl = document.createElement('p');
+  metaEl.className = 'dash-manage-meta';
+  metaEl.textContent = meta;
+  const actionsEl = document.createElement('div');
+  actionsEl.className = 'dash-manage-actions';
+  actions.forEach((action) => actionsEl.appendChild(action));
+  item.append(titleEl, metaEl, actionsEl);
+  return item;
+}
+
+async function refreshManagement() {
+  const data = await fetchDashboard(currentAdminKey);
+  renderManagement(data);
+}
+
+function renderManagement(data) {
+  const reviewEl = document.getElementById('dashReviewManagement');
+  reviewEl.innerHTML = '';
+  data.reviews.management.forEach((review) => {
+    reviewEl.appendChild(managementItem(
+      `${formatAiName(review.aiKey)} · ${review.rating}★`,
+      `${review.author} · ${timeAgo(review.created_at)}${review.hidden ? ' · hidden' : ''}${review.moderated ? ' · moderated' : ''}`,
+      [
+        actionButton('View', () => alert(review.text)),
+        actionButton(review.hidden ? 'Show' : 'Hide', async () => { await adminRequest(`/api/admin/reviews/${review.id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !review.hidden }) }); await refreshManagement(); }),
+        actionButton(review.moderated ? 'Unmoderate' : 'Moderate', async () => { await adminRequest(`/api/admin/reviews/${review.id}`, { method: 'PATCH', body: JSON.stringify({ moderated: !review.moderated }) }); await refreshManagement(); }),
+        actionButton('Delete', async () => { if (confirm('Delete this review?')) { await adminRequest(`/api/admin/reviews/${review.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)
+      ]
+    ));
+  });
+  if (!reviewEl.children.length) reviewEl.innerHTML = '<p class="dash-empty">No reviews.</p>';
+
+  const projectEl = document.getElementById('dashProjectManagement');
+  projectEl.innerHTML = '';
+  data.projects.management.forEach((project) => {
+    projectEl.appendChild(managementItem(
+      project.title,
+      `${project.author} · ${formatAiName(project.aiKey)} · ${project.approved ? 'approved' : 'pending'}${project.featured ? ' · featured' : ''}`,
+      [
+        actionButton('View', () => alert(project.description)),
+        actionButton(project.approved ? 'Unapprove' : 'Approve', async () => { await adminRequest(`/api/admin/projects/${project.id}`, { method: 'PATCH', body: JSON.stringify({ approved: !project.approved }) }); await refreshManagement(); }),
+        actionButton(project.featured ? 'Unfeature' : 'Feature', async () => { await adminRequest(`/api/admin/projects/${project.id}`, { method: 'PATCH', body: JSON.stringify({ featured: !project.featured }) }); await refreshManagement(); }),
+        actionButton('Delete', async () => { if (confirm('Delete this project and its comments?')) { await adminRequest(`/api/admin/projects/${project.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)
+      ]
+    ));
+  });
+  if (!projectEl.children.length) projectEl.innerHTML = '<p class="dash-empty">No projects.</p>';
+
+  const quoteEl = document.getElementById('dashQuoteManagement');
+  quoteEl.innerHTML = '';
+  data.quotes.management.forEach((quote) => {
+    quoteEl.appendChild(managementItem(
+      quote.company,
+      `${quote.name} · ${quote.project} · ${quote.status}`,
+      [
+        actionButton('View details', () => alert(`${quote.name}\n${quote.email}\n${quote.phone}\n${quote.project}`)),
+        actionButton('Change status', async () => { const status = prompt('Status: new, in-progress, replied, or closed', quote.status); if (status) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); await refreshManagement(); } }),
+        actionButton('Reply', async () => { const reply = prompt('Reply to this quote request', quote.reply || ''); if (reply !== null) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'PATCH', body: JSON.stringify({ reply, status: 'replied' }) }); await refreshManagement(); } }),
+        actionButton('Delete', async () => { if (confirm('Delete this quote request?')) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)
+      ]
+    ));
+  });
+  if (!quoteEl.children.length) quoteEl.innerHTML = '<p class="dash-empty">No quotes.</p>';
+
+  const userEl = document.getElementById('dashUserManagement');
+  userEl.innerHTML = '';
+  data.users.management.forEach((user) => userEl.appendChild(managementItem(user.name, `${user.email} · ${user.role} · joined ${timeAgo(user.created_at)}`, [])));
+  if (!userEl.children.length) userEl.innerHTML = '<p class="dash-empty">No users.</p>';
+
+  const toolEl = document.getElementById('dashToolManagement');
+  toolEl.innerHTML = '';
+  data.aiTools.forEach((tool) => toolEl.appendChild(managementItem(
+    tool.name,
+    `${tool.category} · ${tool.pricing || 'pricing not set'} · ${tool.apiAvailable ? 'API available' : 'no API listed'}`,
+    [actionButton('View', () => alert(`${tool.description}\n${tool.website}`)), actionButton('Delete', async () => { if (confirm('Delete this AI tool?')) { await adminRequest(`/api/admin/ai-tools/${tool.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)]
+  )));
+  if (!toolEl.children.length) toolEl.innerHTML = '<p class="dash-empty">No tool activity yet.</p>';
+
+  const analyticsEl = document.getElementById('dashAnalyticsManagement');
+  analyticsEl.innerHTML = '';
+  [
+    `Reviews: ${data.reviews.total}`,
+    `Projects: ${data.projects.total}`,
+    `Quotes: ${data.quotes.total}`,
+    `Users: ${data.users.total}`,
+    `Hero likes: ${data.hero.likes}`
+  ].forEach((metric) => analyticsEl.appendChild(managementItem(metric, 'Database-backed metric', [])));
+}
+
+function renderStats(data) {
+  const stats = [
+    { icon: '📝', label: 'Total reviews', value: data.reviews.total },
+    { icon: '⭐', label: 'Avg rating', value: data.reviews.total ? `${data.reviews.avgRating.toFixed(1)} ★` : '—' },
+    { icon: '🚀', label: 'Community projects', value: data.projects.total },
+    { icon: '💬', label: 'Project comments', value: data.projects.totalComments },
+    { icon: '📩', label: 'Quote requests', value: data.quotes.total },
+    { icon: '❤️', label: 'Hero likes', value: data.hero.likes },
+    { icon: '👤', label: 'Users', value: data.users.total }
+  ];
+  const el = document.getElementById('dashStats');
+  el.innerHTML = '';
+  stats.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'dash-stat';
+    card.innerHTML = `<span class="dash-stat-icon" aria-hidden="true"></span><p class="dash-stat-label"></p><div class="dash-stat-value"></div>`;
+    card.querySelector('.dash-stat-icon').textContent = s.icon;
+    card.querySelector('.dash-stat-label').textContent = s.label;
+    card.querySelector('.dash-stat-value').textContent = s.value;
+    el.appendChild(card);
+  });
+}
+
+function renderBarChart(perAi) {
+  const el = document.getElementById('dashBarChart');
+  el.innerHTML = '';
+  if (perAi.length === 0) {
+    el.innerHTML = '<p class="dash-empty">No reviews yet.</p>';
+    return;
+  }
+  const top = perAi.slice(0, 8);
+  const max = Math.max(...top.map(r => r.count));
+  top.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'dash-bar-row';
+    row.innerHTML = `
+      <span class="dash-bar-label"></span>
+      <span class="dash-bar-track"><span class="dash-bar-fill" style="width:${Math.max(6, (r.count / max) * 100)}%"></span></span>
+      <span class="dash-bar-count"></span>
+    `;
+    row.querySelector('.dash-bar-label').textContent = formatAiName(r.aiKey);
+    row.querySelector('.dash-bar-count').textContent = `${r.count} (${r.avgRating.toFixed(1)}★)`;
+    el.appendChild(row);
+  });
+}
+
+function renderDonut(distribution) {
+  const svg = document.getElementById('dashDonut');
+  const legend = document.getElementById('dashDonutLegend');
+  const total = distribution.reduce((a, b) => a + b, 0);
+  const cx = 70, cy = 70, r = 52, stroke = 18;
+  const circumference = 2 * Math.PI * r;
+
+  let svgParts = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#26332F" stroke-width="${stroke}"/>`;
+  legend.innerHTML = '';
+
+  if (total === 0) {
+    svg.innerHTML = svgParts;
+    legend.innerHTML = '<span class="dash-empty">No reviews yet.</span>';
+    return;
+  }
+
+  let offset = 0;
+  distribution.forEach((count, i) => {
+    const stars = i + 1;
+    const fraction = count / total;
+    const dash = fraction * circumference;
+    const gap = circumference - dash;
+    svgParts += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${RATING_COLORS[i]}" stroke-width="${stroke}"
+      stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset += dash;
+
+    const item = document.createElement('span');
+    item.innerHTML = `<span class="dash-donut-dot" style="background:${RATING_COLORS[i]}"></span><span></span>`;
+    item.querySelector('span:last-child').textContent = `${stars}★ — ${count}`;
+    legend.appendChild(item);
+  });
+
+  const avg = distribution.reduce((sum, c, i) => sum + c * (i + 1), 0) / total;
+  svgParts += `<text x="${cx}" y="${cy - 3}" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="20" font-weight="700" fill="#EDEEE7">${avg.toFixed(1)}</text>`;
+  svgParts += `<text x="${cx}" y="${cy + 14}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#68766F">AVG</text>`;
+  svg.innerHTML = svgParts;
+}
+
+function renderProjects(recent) {
+  const el = document.getElementById('dashProjects');
+  el.innerHTML = '';
+  if (recent.length === 0) {
+    el.innerHTML = '<p class="dash-empty">No projects shared yet.</p>';
+    return;
+  }
+  recent.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'dash-list-item';
+    item.innerHTML = `
+      <div class="dash-list-top"><span></span><span></span></div>
+      <div class="dash-list-meta"></div>
+    `;
+    item.querySelector('.dash-list-top span:first-child').textContent = p.title;
+    item.querySelector('.dash-list-top span:last-child').textContent = `${p.commentCount} comment${p.commentCount === 1 ? '' : 's'}`;
+    item.querySelector('.dash-list-meta').textContent = `by ${p.author} · ${formatAiName(p.aiKey)} · ${timeAgo(p.created_at)}`;
+    el.appendChild(item);
+  });
+}
+
+function renderQuotes(recent, byService) {
+  const el = document.getElementById('dashQuotes');
+  el.innerHTML = '';
+  if (recent.length === 0) {
+    el.innerHTML = '<p class="dash-empty">No quote requests yet.</p>';
+  } else {
+    recent.forEach(q => {
+      const item = document.createElement('div');
+      item.className = 'dash-list-item';
+      item.innerHTML = `
+        <div class="dash-list-top"><span></span><span></span></div>
+        <div class="dash-list-meta"></div>
+      `;
+      item.querySelector('.dash-list-top span:first-child').textContent = q.company;
+      item.querySelector('.dash-list-top span:last-child').textContent = timeAgo(q.created_at);
+      item.querySelector('.dash-list-meta').textContent = `${q.name} · ${q.project}`;
+      el.appendChild(item);
+    });
+  }
+
+  const servicesEl = document.getElementById('dashServices');
+  servicesEl.innerHTML = '';
+  const entries = Object.entries(byService);
+  if (entries.length > 0) {
+    const header = document.createElement('p');
+    header.className = 'dash-panel-sub';
+    header.style.margin = '4px 0 0';
+    header.textContent = 'By service requested';
+    servicesEl.appendChild(header);
+    entries.forEach(([service, count]) => {
+      const row = document.createElement('div');
+      row.className = 'dash-service-row';
+      row.innerHTML = `<span></span><b></b>`;
+      row.querySelector('span').textContent = service.replace(/-/g, ' ');
+      row.querySelector('b').textContent = count;
+      servicesEl.appendChild(row);
+    });
+  }
+}
+
+async function loadDashboard(key) {
+  currentAdminKey = key;
+  const btn = document.getElementById('dashRefreshBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const data = await fetchDashboard(key);
+    renderStats(data);
+    renderBarChart(data.reviews.perAi);
+    renderDonut(data.reviews.distribution);
+    renderProjects(data.projects.recent);
+    renderQuotes(data.quotes.recent, data.quotes.byService);
+    renderManagement(data);
+    document.getElementById('dashUpdated').innerHTML = '<span class="pulse-dot" style="position:static;"></span>Updated ' + new Date().toLocaleTimeString();
+    document.getElementById('dashGate').style.display = 'none';
+    document.getElementById('dashBody').style.display = '';
+  } catch (err) {
+    sessionStorage.removeItem(KEY_STORAGE);
+    document.getElementById('dashGateError').textContent = err.message === 'unauthorized'
+      ? 'That key doesn\u2019t match ADMIN_KEY on the server.'
+      : `Couldn't load the dashboard: ${err.message}`;
+    document.getElementById('dashGate').style.display = '';
+    document.getElementById('dashBody').style.display = 'none';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+document.getElementById('dashUnlockBtn').addEventListener('click', () => {
+  const key = document.getElementById('dashKeyInput').value.trim();
+  if (!key) return;
+  loginAdmin(key)
+    .then(() => {
+      sessionStorage.setItem(KEY_STORAGE, key);
+      document.getElementById('dashKeyInput').value = '';
+      return loadDashboard(key);
+    })
+    .catch((err) => {
+      document.getElementById('dashGateError').textContent = err.message === 'unauthorized'
+        ? 'That key doesn\u2019t match ADMIN_KEY on the server.'
+        : `Couldn't sign in: ${err.message}`;
+    });
+});
+document.getElementById('dashKeyInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('dashUnlockBtn').click();
+});
+document.getElementById('dashRefreshBtn').addEventListener('click', () => {
+  const key = sessionStorage.getItem(KEY_STORAGE);
+  if (key) loadDashboard(key);
+});
+document.getElementById('dashLogoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem(KEY_STORAGE);
+  document.getElementById('dashKeyInput').value = '';
+  document.getElementById('dashGateError').textContent = '';
+  document.getElementById('dashGate').style.display = '';
+  document.getElementById('dashBody').style.display = 'none';
+});
+
+// Auto-unlock if a key is already stored for this browser tab.
+const storedKey = sessionStorage.getItem(KEY_STORAGE);
+if (storedKey) loadDashboard(storedKey);
+</script>
+</body>
+</html>

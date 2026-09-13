@@ -28,6 +28,7 @@
     <li><a href="#communitySection">Community</a></li>
     <li><a href="#" id="docsBtn">Docs</a></li>
     <li><a href="Architecture.html">Architecture</a></li>
+    <li><a href="UserDashboard.html">My dashboard</a></li>
   </ul>
   <div class="nav-actions">
     <button class="btn-ghost" id="signInBtn">Sign in</button>
@@ -499,8 +500,24 @@
     </button>
 
     <p class="modal-eyebrow">Sign in to DINASTY</p>
-    <h2 class="modal-title" id="modalTitle">Choose your AI</h2>
-    <p class="modal-subtext" id="modalSubtext">Pick the model that powers your workspace. You can change this later in settings.</p>
+    <div id="identityView">
+      <h2 class="modal-title">Sign in to your workspace</h2>
+      <p class="modal-subtext">Use your email and password to continue.</p>
+      <form class="identity-form" id="identityForm">
+        <label for="identityName">Your name</label>
+        <input type="text" id="identityName" name="name" autocomplete="name" required maxlength="200" placeholder="Jane Doe">
+        <label for="identityEmail">Email address</label>
+        <input type="email" id="identityEmail" name="email" autocomplete="email" required maxlength="200" placeholder="jane@example.com">
+        <label for="identityPassword">Password</label>
+        <input type="password" id="identityPassword" name="password" autocomplete="new-password" required minlength="8" maxlength="200" placeholder="At least 8 characters">
+        <button class="btn-solid identity-submit" type="submit">Sign in</button>
+      </form>
+      <p class="modal-subtext identity-error" id="identityError" role="alert"></p>
+    </div>
+
+    <div id="aiPickerView" class="hidden-view">
+      <h2 class="modal-title" id="modalTitle">Choose your AI</h2>
+      <p class="modal-subtext" id="modalSubtext">Pick the model that powers your workspace. You can change this later in settings.</p>
 
     <input type="text" class="ai-search" id="aiSearch" placeholder="Search AI tools…">
 
@@ -744,6 +761,7 @@
           <button class="btn-solid" id="confirmYesBtn">Yes, choose it</button>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </div>

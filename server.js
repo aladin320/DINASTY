@@ -1,12 +1,18 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import { randomBytes, timingSafeEqual } from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
   listReviews, addReview,
   listProjects, getProject, addProject, addProjectComment,
   listHeroComments, addHeroComment, getLikeCount, adjustLikeCount,
-  addQuoteRequest, listQuoteRequests
+  addQuoteRequest, listQuoteRequests, getDashboardData, registerUser,
+  listAdminReviews, deleteReview, moderateReview,
+  listAdminProjects, updateProjectModeration, deleteProject,
+  listAdminQuotes, updateQuote, deleteQuote,
+  listAdminAiTools, addAiTool, deleteAiTool,
+  verifyUserPassword, getUserDashboardData, saveTool, removeSavedTool, addUserComparison
 } from './db.js';
 
 dotenv.config();
@@ -16,6 +22,16 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
+const adminSessions = new Map();
+const authSessions = new Map();
+const loginRateLimits = new Map();
+const failedLogins = new Map();
+const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const AUTH_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 10;
+const FAILED_LOGIN_MAX_ATTEMPTS = 5;
+const FAILED_LOGIN_LOCK_MS = 15 * 60 * 1000;
 
 // Serve the frontend files from the project root, where index.html, style.css
 // and script.js live, so the browser's API calls stay same-origin.
@@ -23,6 +39,10 @@ app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/style.css', (_req, res) => res.sendFile(path.join(__dirname, 'style.css')));
 app.get('/script.js', (_req, res) => res.sendFile(path.join(__dirname, 'script.js')));
 app.get('/Architecture.html', (_req, res) => res.sendFile(path.join(__dirname, 'Architecture.html')));
+app.get('/Dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'Dashboard.html')));
+app.get('/dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'Dashboard.html')));
+app.get('/UserDashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'UserDashboard.html')));
+app.get('/user-dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'UserDashboard.html')));
 
 // ---------- Small validation helpers ----------
 // Nothing fancy — just enough to keep obviously-bad data (empty strings,
@@ -38,6 +58,226 @@ function cleanStr(value, maxLen) {
   return trimmed.slice(0, maxLen);
 }
 
+function createAdminSession() {
+  const token = randomBytes(32).toString('hex');
+  adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL_MS);
+  return token;
+}
+
+function parseCookies(req) {
+  const header = req.get('cookie') || '';
+  return Object.fromEntries(header.split(';').filter(Boolean).map((part) => {
+    const index = part.indexOf('=');
+    return [part.slice(0, index).trim(), decodeURIComponent(part.slice(index + 1).trim())];
+  }));
+}
+
+function setAuthCookie(res, token, maxAge) {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `dinasty_session=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax${secure}`);
+}
+
+function clearAuthCookie(res) {
+  res.setHeader('Set-Cookie', 'dinasty_session=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax');
+}
+
+function clientAddress(req) {
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+function loginRateLimited(req) {
+  const now = Date.now();
+  const key = clientAddress(req);
+  const current = loginRateLimits.get(key);
+  if (!current || current.resetAt <= now) {
+    loginRateLimits.set(key, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    return false;
+  }
+  current.count += 1;
+  return current.count > LOGIN_MAX_ATTEMPTS;
+}
+
+function failedLoginLocked(req, email) {
+  const entry = failedLogins.get(`${clientAddress(req)}:${email}`);
+  return Boolean(entry && entry.lockedUntil > Date.now());
+}
+
+function recordFailedLogin(req, email) {
+  const key = `${clientAddress(req)}:${email}`;
+  const now = Date.now();
+  const current = failedLogins.get(key);
+  const entry = !current || current.resetAt <= now
+    ? { count: 0, resetAt: now + LOGIN_WINDOW_MS, lockedUntil: 0 }
+    : current;
+  entry.count += 1;
+  if (entry.count >= FAILED_LOGIN_MAX_ATTEMPTS) entry.lockedUntil = now + FAILED_LOGIN_LOCK_MS;
+  failedLogins.set(key, entry);
+}
+
+function clearFailedLogins(req, email) {
+  failedLogins.delete(`${clientAddress(req)}:${email}`);
+}
+
+function adminKeyMatches(candidate, expected) {
+  if (typeof candidate !== 'string' || candidate.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(candidate), Buffer.from(expected));
+}
+
+function requireAdminAccess(req, res) {
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey) {
+    res.status(503).json({ error: 'ADMIN_KEY is not configured on the server' });
+    return false;
+  }
+  if (adminKeyMatches(req.get('x-admin-key'), adminKey)) return true;
+
+  const authenticatedUser = getAuthSession(req);
+  if (authenticatedUser?.user.role === 'admin') return true;
+
+  const authorization = req.get('authorization') || '';
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  const expiresAt = token && adminSessions.get(token);
+
+  if (!expiresAt) {
+    res.status(401).json({ error: 'unauthorized' });
+    return false;
+  }
+  if (expiresAt <= Date.now()) {
+    adminSessions.delete(token);
+    res.status(401).json({ error: 'session expired' });
+    return false;
+  }
+  return true;
+}
+
+function getAuthSession(req) {
+  const cookies = parseCookies(req);
+  const authorization = req.get('authorization') || '';
+  const bearer = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  const token = cookies.dinasty_session || bearer;
+  const session = token && authSessions.get(token);
+  if (!session) return null;
+  if (session.expiresAt <= Date.now()) {
+    authSessions.delete(token);
+    return null;
+  }
+  return { token, ...session };
+}
+
+function requireUserSession(req, res, roles = ['user', 'admin']) {
+  const session = getAuthSession(req);
+  if (!session) {
+    res.status(401).json({ error: 'authentication required' });
+    return null;
+  }
+  if (!roles.includes(session.user.role)) {
+    res.status(403).json({ error: 'forbidden' });
+    return null;
+  }
+  return session;
+}
+
+app.post('/api/admin/login', (req, res) => {
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey) {
+    return res.status(503).json({ error: 'ADMIN_KEY is not configured on the server' });
+  }
+  if (req.body?.key !== adminKey) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+  res.json({ token: createAdminSession(), expiresIn: ADMIN_SESSION_TTL_MS });
+});
+
+function cleanEmail(value) {
+  const email = cleanStr(value, MAX_SHORT)?.toLowerCase();
+  return email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
+function createAuthSession(user) {
+  const token = randomBytes(32).toString('hex');
+  authSessions.set(token, { user, expiresAt: Date.now() + AUTH_SESSION_TTL_MS });
+  return token;
+}
+
+app.post('/api/auth/login', (req, res) => {
+  if (loginRateLimited(req)) return res.status(429).json({ error: 'too many login attempts; try again later' });
+  const email = cleanEmail(req.body?.email);
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  if (!email || password.length < 8) {
+    return res.status(400).json({ error: 'valid email and password are required' });
+  }
+  if (failedLoginLocked(req, email)) return res.status(429).json({ error: 'account temporarily locked; try again later' });
+
+  const user = verifyUserPassword(email, password);
+  if (!user) {
+    recordFailedLogin(req, email);
+    return res.status(401).json({ error: 'invalid email or password' });
+  }
+
+  clearFailedLogins(req, email);
+  const token = createAuthSession(user);
+  setAuthCookie(res, token, AUTH_SESSION_TTL_MS / 1000);
+  res.json({
+    expiresIn: AUTH_SESSION_TTL_MS,
+    user
+  });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  const session = getAuthSession(req);
+  if (session) authSessions.delete(session.token);
+  clearAuthCookie(res);
+  res.status(204).end();
+});
+
+app.get('/api/auth/me', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  res.json({ user: session.user, expiresAt: session.expiresAt });
+});
+
+app.get('/api/user/dashboard', (req, res) => {
+  const session = requireUserSession(req, res, ['user', 'admin']);
+  if (!session) return;
+  res.json(getUserDashboardData(session.user));
+});
+
+app.post('/api/user/saved-tools', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  const aiKey = cleanStr(req.body?.aiKey, MAX_SHORT);
+  if (!aiKey) return res.status(400).json({ error: 'aiKey is required' });
+  res.status(201).json(saveTool(session.user.id, aiKey));
+});
+
+app.delete('/api/user/saved-tools/:aiKey', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  if (!removeSavedTool(session.user.id, req.params.aiKey)) return res.status(404).json({ error: 'saved tool not found' });
+  res.status(204).end();
+});
+
+app.post('/api/user/comparisons', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  const title = cleanStr(req.body?.title, MAX_SHORT);
+  const aiKeys = Array.isArray(req.body?.aiKeys) ? req.body.aiKeys.filter((key) => typeof key === 'string').slice(0, 10) : [];
+  if (!title || aiKeys.length < 2) return res.status(400).json({ error: 'title and at least two aiKeys are required' });
+  res.status(201).json(addUserComparison(session.user.id, title, aiKeys));
+});
+
+app.post('/api/auth/register', (req, res) => {
+  const name = cleanStr(req.body?.name, MAX_SHORT);
+  const email = cleanEmail(req.body?.email);
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  if (!name || !email || password.length < 8) {
+    return res.status(400).json({ error: 'name, valid email and password of at least 8 characters are required' });
+  }
+  const user = registerUser(name, email, password);
+  if (!user) return res.status(409).json({ error: 'an account with this email already exists' });
+  res.status(201).json(user);
+});
+
 // =========================================================
 // AI performance reviews
 // =========================================================
@@ -49,8 +289,10 @@ app.get('/api/reviews/:aiKey', (req, res) => {
 });
 
 app.post('/api/reviews/:aiKey', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
   const aiKey = cleanStr(req.params.aiKey, MAX_SHORT);
-  const author = cleanStr(req.body?.author, MAX_SHORT) || 'You';
+  const author = session.user.name;
   const text = cleanStr(req.body?.text, MAX_TEXT);
   const rating = Number(req.body?.rating);
 
@@ -80,8 +322,10 @@ app.get('/api/projects/:id', (req, res) => {
 });
 
 app.post('/api/projects', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
   const title = cleanStr(req.body?.title, MAX_SHORT);
-  const author = cleanStr(req.body?.author, MAX_SHORT);
+  const author = session.user.name;
   const aiKey = cleanStr(req.body?.aiKey, MAX_SHORT);
   const description = cleanStr(req.body?.description, MAX_TEXT);
   const link = cleanStr(req.body?.link, 500) || '';
@@ -94,8 +338,10 @@ app.post('/api/projects', (req, res) => {
 });
 
 app.post('/api/projects/:id/comments', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
   const id = Number(req.params.id);
-  const author = cleanStr(req.body?.author, MAX_SHORT) || 'You';
+  const author = session.user.name;
   const text = cleanStr(req.body?.text, MAX_TEXT);
 
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'invalid project id' });
@@ -114,7 +360,9 @@ app.get('/api/hero', (_req, res) => {
 });
 
 app.post('/api/hero/comments', (req, res) => {
-  const author = cleanStr(req.body?.author, MAX_SHORT) || 'You';
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  const author = session.user.name;
   const text = cleanStr(req.body?.text, MAX_TEXT);
   if (!text) return res.status(400).json({ error: 'text is required' });
   res.status(201).json(addHeroComment(author, text));
@@ -150,19 +398,120 @@ app.post('/api/quote', (req, res) => {
   res.status(201).json({ success: true, id: saved.id });
 });
 
-// Simple owner-only view of submitted quote requests. Not linked from the
-// UI — hit it directly (e.g. with curl) with the admin key from .env.
-// This is intentionally minimal; swap in real auth before using this in
-// production.
+// Owner-only dashboard data. The browser sends the real ADMIN_KEY in the
+// x-admin-key header; no dashboard data is returned without authentication.
+app.get('/api/dashboard', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  res.json(getDashboardData());
+});
+
+function adminId(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    res.status(400).json({ error: 'invalid id' });
+    return null;
+  }
+  return id;
+}
+
+app.get('/api/admin/reviews', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  res.json(listAdminReviews());
+});
+app.patch('/api/admin/reviews/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  if (!moderateReview(id, req.body || {})) return res.status(404).json({ error: 'review not found or no changes supplied' });
+  res.json({ success: true });
+});
+app.delete('/api/admin/reviews/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  if (!deleteReview(id)) return res.status(404).json({ error: 'review not found' });
+  res.status(204).end();
+});
+
+app.get('/api/admin/projects', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  res.json(listAdminProjects());
+});
+app.patch('/api/admin/projects/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  if (!updateProjectModeration(id, req.body || {})) return res.status(404).json({ error: 'project not found or no changes supplied' });
+  res.json({ success: true });
+});
+app.delete('/api/admin/projects/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  if (!deleteProject(id)) return res.status(404).json({ error: 'project not found' });
+  res.status(204).end();
+});
+
+app.get('/api/admin/ai-tools', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  res.json(listAdminAiTools());
+});
+app.post('/api/admin/ai-tools', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const body = req.body || {};
+  const required = ['name', 'slug', 'category', 'description', 'website'];
+  if (required.some((field) => !cleanStr(body[field], field === 'description' ? MAX_TEXT : MAX_SHORT))) {
+    return res.status(400).json({ error: 'name, slug, category, description and website are required' });
+  }
+  try {
+    res.status(201).json(addAiTool({
+      name: cleanStr(body.name, MAX_SHORT), slug: cleanStr(body.slug, MAX_SHORT),
+      category: cleanStr(body.category, MAX_SHORT), description: cleanStr(body.description, MAX_TEXT),
+      website: cleanStr(body.website, 500), pricing: cleanStr(body.pricing, MAX_SHORT) || '',
+      model: cleanStr(body.model, MAX_SHORT) || '', contextWindow: Number(body.contextWindow) || null,
+      speed: cleanStr(body.speed, MAX_SHORT) || '', codingScore: Number(body.codingScore) || null,
+      reasoningScore: Number(body.reasoningScore) || null, imageSupport: Boolean(body.imageSupport),
+      audioSupport: Boolean(body.audioSupport), apiAvailable: Boolean(body.apiAvailable),
+      privacy: cleanStr(body.privacy, MAX_TEXT) || '', logo: cleanStr(body.logo, 500) || ''
+    }));
+  } catch (error) {
+    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(409).json({ error: 'slug already exists' });
+    throw error;
+  }
+});
+app.delete('/api/admin/ai-tools/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  if (!deleteAiTool(id)) return res.status(404).json({ error: 'AI tool not found' });
+  res.status(204).end();
+});
+
 app.get('/api/admin/quotes', (req, res) => {
-  const adminKey = process.env.ADMIN_KEY;
-  if (!adminKey) {
-    return res.status(503).json({ error: 'ADMIN_KEY is not configured on the server' });
+  if (!requireAdminAccess(req, res)) return;
+  res.json(listAdminQuotes());
+});
+app.patch('/api/admin/quotes/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  const body = req.body || {};
+  const allowedStatuses = ['new', 'in-progress', 'replied', 'closed'];
+  if (body.status !== undefined && !allowedStatuses.includes(body.status)) {
+    return res.status(400).json({ error: 'invalid quote status' });
   }
-  if (req.get('x-admin-key') !== adminKey) {
-    return res.status(401).json({ error: 'unauthorized' });
+  if (body.reply !== undefined && typeof body.reply !== 'string') {
+    return res.status(400).json({ error: 'reply must be text' });
   }
-  res.json(listQuoteRequests());
+  if (!updateQuote(id, { status: body.status, reply: body.reply })) return res.status(404).json({ error: 'quote not found or no changes supplied' });
+  res.json({ success: true });
+});
+app.delete('/api/admin/quotes/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  if (!deleteQuote(id)) return res.status(404).json({ error: 'quote not found' });
+  res.status(204).end();
 });
 
 // =========================================================

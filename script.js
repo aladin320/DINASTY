@@ -26,6 +26,7 @@ async function apiPost(url, body) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
     body: JSON.stringify(body)
   });
   if (!res.ok) {
@@ -401,6 +402,8 @@ const identityView = document.getElementById('identityView');
 const identityForm = document.getElementById('identityForm');
 const identityName = document.getElementById('identityName');
 const identityEmail = document.getElementById('identityEmail');
+const identityPassword = document.getElementById('identityPassword');
+const identityError = document.getElementById('identityError');
 const aiPickerView = document.getElementById('aiPickerView');
 const modalSubtext = document.getElementById('modalSubtext');
 const aiSearch = document.getElementById('aiSearch');
@@ -444,6 +447,8 @@ function showIdentityView() {
   aiPickerView.classList.add('hidden-view');
   identityName.value = getCurrentUser()?.name || '';
   identityEmail.value = getCurrentUser()?.email || '';
+  identityPassword.value = '';
+  identityError.textContent = '';
 }
 
 function showAiPickerView() {
@@ -508,15 +513,33 @@ function closeSignInModal() {
   onModalClose(signInOverlay);
 }
 
-identityForm.addEventListener('submit', (event) => {
+identityForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const name = identityName.value.trim();
   const email = identityEmail.value.trim().toLowerCase();
-  if (!name || !email || !identityForm.checkValidity()) return;
+  const password = identityPassword.value;
+  if (!name || !email || !password || !identityForm.checkValidity()) return;
 
-  localStorage.setItem('dinastyUser', JSON.stringify({ name, email }));
-  updateSignInButton();
-  openAiPicker(pendingCategory);
+  const submitButton = identityForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  identityError.textContent = '';
+  try {
+    try {
+      await apiPost('/api/auth/login', { email, password });
+    } catch (loginError) {
+      if (!loginError.message.includes('invalid email or password')) throw loginError;
+      await apiPost('/api/auth/register', { name, email, password });
+      await apiPost('/api/auth/login', { email, password });
+    }
+    localStorage.setItem('dinastyUser', JSON.stringify({ name, email }));
+    updateSignInButton();
+    openAiPicker(pendingCategory);
+  } catch (err) {
+    identityError.textContent = err.message;
+    console.error('Failed to save user identity:', err);
+  } finally {
+    submitButton.disabled = false;
+  }
 });
 
 signInBtn.addEventListener('click', () => openSignInModal(null));

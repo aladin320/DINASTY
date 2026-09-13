@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DINASTY - My dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .user-page{max-width:1100px;margin:0 auto;padding:48px 20px 80px}
+  .user-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+  .user-eyebrow{font:12px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--sage);margin:0 0 8px}
+  .user-title{font:700 clamp(26px,4vw,38px) var(--font-display);margin:0}
+  .user-email{color:var(--ink-faint);font-size:13px;margin:7px 0 0}
+  .user-action{border:1px solid var(--line);background:rgba(143,191,163,.08);color:var(--sage);border-radius:7px;padding:9px 14px;font:600 13px var(--font-body);cursor:pointer}
+  .user-action:hover{border-color:var(--sage-dim)}
+  .user-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+  .user-stat,.user-panel{background:var(--bg-raised);border:1px solid var(--line);border-radius:12px}
+  .user-stat{padding:18px}.user-stat-label{color:var(--ink-faint);font:11px var(--font-mono);text-transform:uppercase;margin:0 0 8px}.user-stat-value{font:700 27px var(--font-display);color:var(--ink)}
+  .user-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .user-panel{padding:22px}.user-panel h2{font:600 17px var(--font-display);margin:0 0 4px}.user-panel-sub{color:var(--ink-faint);font-size:12.5px;margin:0 0 18px}
+  .user-list{display:flex;flex-direction:column;gap:12px}.user-item{border-bottom:1px solid var(--line);padding-bottom:12px}.user-item:last-child{border-bottom:0;padding-bottom:0}.user-item-title{font-size:13.5px;font-weight:600;color:var(--ink);margin:0 0 4px}.user-item-meta{font-size:12px;color:var(--ink-faint);margin:0;line-height:1.5}.user-empty{color:var(--ink-faint);font-size:13px}
+  .user-gate{text-align:center;max-width:430px;margin:90px auto}.user-gate h1{font:600 25px var(--font-display);margin:0 0 10px}.user-gate p{color:var(--ink-dim);line-height:1.6;font-size:14px}.user-gate a{display:inline-block;margin-top:12px;color:var(--sage)}
+  @media(max-width:700px){.user-stats,.user-grid{grid-template-columns:1fr}.user-page{padding-top:30px}}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo"><div class="logo-mark">D</div><div class="logo-title">DIN<span>A</span>STY</div></div>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="Architecture.html">Architecture</a></li>
+    <li><a href="UserDashboard.html">My dashboard</a></li>
+    <li><a href="Dashboard.html">Admin</a></li>
+  </ul>
+  <div class="nav-actions"><button class="user-action" id="logoutBtn" type="button">Log out</button></div>
+</nav>
+
+<main class="user-page">
+  <div class="user-gate" id="userGate" hidden>
+    <h1>Sign in required</h1>
+    <p>Your personal dashboard is available after you sign in to DINASTY.</p>
+    <a href="index.html">Return to sign in</a>
+  </div>
+
+  <div id="userBody" hidden>
+    <header class="user-head">
+      <div><p class="user-eyebrow">Personal workspace</p><h1 class="user-title" id="userName">My dashboard</h1><p class="user-email" id="userEmail"></p></div>
+      <span class="dash-updated" id="userUpdated"></span>
+    </header>
+    <section class="user-stats" id="userStats"></section>
+    <div class="user-grid">
+      <section class="user-panel"><h2>My AI tools</h2><p class="user-panel-sub">Tools you have reviewed or saved</p><div class="user-list" id="userTools"></div></section>
+      <section class="user-panel"><h2>My comparisons</h2><p class="user-panel-sub">Saved AI tool comparisons</p><div class="user-list" id="userComparisons"></div></section>
+      <section class="user-panel"><h2>Saved tools</h2><p class="user-panel-sub">Your personal tool shortlist</p><div class="user-list" id="userSavedTools"></div></section>
+      <section class="user-panel"><h2>My reviews</h2><p class="user-panel-sub">Performance reviews you have posted</p><div class="user-list" id="userReviews"></div></section>
+      <section class="user-panel"><h2>My projects</h2><p class="user-panel-sub">Projects you have shared with the community</p><div class="user-list" id="userProjects"></div></section>
+      <section class="user-panel"><h2>My quote requests</h2><p class="user-panel-sub">Requests submitted to the DINASTY team</p><div class="user-list" id="userQuotes"></div></section>
+      <section class="user-panel"><h2>Profile</h2><p class="user-panel-sub">Your DINASTY account</p><div class="user-list" id="userProfile"></div></section>
+    </div>
+  </div>
+</main>
+
+<script>
+function formatAiName(key){return key.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
+function timeAgo(value){const minutes=Math.round((Date.now()-new Date(value).getTime())/60000);if(minutes<1)return'just now';if(minutes<60)return`${minutes}m ago`;const hours=Math.round(minutes/60);if(hours<24)return`${hours}h ago`;return`${Math.round(hours/24)}d ago`;}
+function item(title,meta){const el=document.createElement('div');el.className='user-item';const h=document.createElement('p');h.className='user-item-title';h.textContent=title;const p=document.createElement('p');p.className='user-item-meta';p.textContent=meta;el.append(h,p);return el;}
+function renderList(id,items,empty,mapper){const el=document.getElementById(id);el.innerHTML='';if(!items.length){el.innerHTML=`<p class="user-empty">${empty}</p>`;return;}items.forEach(entry=>el.appendChild(mapper(entry)));}
+async function loadUserDashboard(){
+  const response=await fetch('/api/user/dashboard',{credentials:'same-origin'});
+  if(response.status===401){document.getElementById('userGate').hidden=false;return;}
+  if(!response.ok)throw new Error('Could not load your dashboard.');
+  const data=await response.json();
+  document.getElementById('userBody').hidden=false;
+  document.getElementById('userName').textContent=data.user.name;
+  document.getElementById('userEmail').textContent=data.user.email;
+  document.getElementById('userUpdated').textContent='Updated '+new Date().toLocaleTimeString();
+  const stats=[['AI tools',data.savedTools.length],['Comparisons',data.comparisons.length],['Reviews',data.reviews.length],['Projects',data.projects.length],['Quotes',data.quotes.length]];
+  const statsEl=document.getElementById('userStats');statsEl.innerHTML='';stats.forEach(([label,value])=>{const card=document.createElement('div');card.className='user-stat';card.innerHTML='<p class="user-stat-label"></p><div class="user-stat-value"></div>';card.querySelector('.user-stat-label').textContent=label;card.querySelector('.user-stat-value').textContent=value;statsEl.appendChild(card);});
+  renderList('userReviews',data.reviews,'No reviews yet.',review=>item(`${formatAiName(review.aiKey)} - ${review.rating} stars`,`${timeAgo(review.created_at)}${review.hidden?' - hidden':''}`));
+  const toolNames=[...new Set([...data.reviews.map(review=>review.aiKey),...data.savedTools.map(tool=>tool.aiKey)])];
+  renderList('userTools',toolNames,'No AI tools yet.',tool=>item(formatAiName(tool),'In your workspace'));
+  renderList('userSavedTools',data.savedTools,'No saved tools yet.',tool=>item(formatAiName(tool.aiKey),`Saved ${timeAgo(tool.created_at)}`));
+  renderList('userComparisons',data.comparisons,'No comparisons yet.',comparison=>item(comparison.title,comparison.aiKeys.map(formatAiName).join(' vs ')));
+  renderList('userProjects',data.projects,'No projects yet.',project=>item(project.title,`${formatAiName(project.aiKey)} - ${project.commentCount} comments${project.featured?' - featured':''}`));
+  renderList('userQuotes',data.quotes,'No quote requests yet.',quote=>item(quote.project,`${quote.company} - ${quote.status}`));
+  renderList('userProfile',[data.user],'Profile',profile=>item(profile.name,profile.email));
+}
+document.getElementById('logoutBtn').addEventListener('click',async()=>{await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'});window.location.href='index.html';});
+loadUserDashboard().catch(error=>{document.getElementById('userGate').hidden=false;console.error(error);});
+</script>
+</body>
+</html>
