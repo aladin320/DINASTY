@@ -1,4 +1,6 @@
 import express from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { randomBytes, timingSafeEqual } from 'crypto';
 import path from 'path';
@@ -21,7 +23,42 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.disable('x-powered-by');
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https://images.unsplash.com'],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      connectSrc: ["'self'"],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: []
+    }
+  }
+}));
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'too many requests; try again later' }
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'too many auth requests; try again later' }
+});
+
+app.use(generalLimiter);
 app.use(express.json({ limit: '1mb' }));
+app.use('/api/auth', authLimiter);
+app.use('/api/admin/login', authLimiter);
 const adminSessions = new Map();
 const authSessions = new Map();
 const loginRateLimits = new Map();
@@ -43,6 +80,9 @@ app.get('/Dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'Das
 app.get('/dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'Dashboard.html')));
 app.get('/UserDashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'UserDashboard.html')));
 app.get('/user-dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'UserDashboard.html')));
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, service: 'dinasty', timestamp: new Date().toISOString() });
+});
 
 // ---------- Small validation helpers ----------
 // Nothing fancy — just enough to keep obviously-bad data (empty strings,
@@ -80,6 +120,11 @@ function setAuthCookie(res, token, maxAge) {
 function clearAuthCookie(res) {
   res.setHeader('Set-Cookie', 'dinasty_session=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax');
 }
+
+app.use((error, _req, res, _next) => {
+  console.error('Unhandled server error:', error);
+  res.status(500).json({ error: 'internal server error' });
+});
 
 function clientAddress(req) {
   return req.ip || req.socket.remoteAddress || 'unknown';
@@ -536,6 +581,36 @@ You have specific, accurate knowledge of this platform, and should use it whenev
 
 For anything outside that — general questions, advice, technical problems, whatever the person brings up — just answer normally and honestly, the way you would in any other conversation. Never invent DINASTY features that aren't listed above, but don't restrict the conversation to DINASTY topics only.`;
 
+export function smartAgentFallback(userInput = '') {
+  const text = String(userInput || '').toLowerCase();
+
+  if (/(coding|developer|debug|code review|bug|refactor|testing|terminal|cli|api|devops)/.test(text)) {
+    return 'For coding and debugging, start in the Dev AI section and compare coding assistants, code review tools, and testing workflows. Claude Code, Cursor, and GitHub Copilot are strong fits depending on whether you want AI pair programming, debugging, or code review support.';
+  }
+
+  if (/(write|writing|email|copy|blog|content|docs|summarize|article)/.test(text)) {
+    return 'For writing and content work, use the Writing category on the home page. Claude and ChatGPT are typically strongest for long-form writing, brainstorming, and rewriting, while more focused tools can help with style and speed.';
+  }
+
+  if (/(image|design|logo|mockup|illustration|visual)/.test(text)) {
+    return 'For visual creation, open the Image Generation category and compare tools by image quality, editing flexibility, and how quickly they fit into your design workflow.';
+  }
+
+  if (/(research|compare|analysis|market|report|brief|study)/.test(text)) {
+    return 'For research-heavy work, use the Research or Productivity categories and compare tools by context window, citation quality, and workflow integration. The Docs section is also a good place to evaluate options.';
+  }
+
+  if (/(quote|pricing|buy|contact|demo|request)/.test(text)) {
+    return 'If you want to talk pricing or request a custom recommendation, use the Request a Quote flow from the top nav or the Product section. That lets the team follow up with the right service and project context.';
+  }
+
+  if (/(community|project|share|review|compare)/.test(text)) {
+    return 'The Community section is where people share projects built with AI. Start with “Share your project” to post a build, then browse project comments and Performance Reviews to see how real teams are using tools.';
+  }
+
+  return 'Start with the Goal-based AI picker on the homepage, or use the Dev AI section for coding and technical tools. From there, open a tool detail to read Performance Reviews, compare options, and request a quote if you want a tailored recommendation.';
+}
+
 app.post('/api/agent-chat', async (req, res) => {
   try {
     const { messages } = req.body || {};
@@ -546,12 +621,10 @@ app.post('/api/agent-chat', async (req, res) => {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      // No key yet — don't hard-fail. Answer with a real reply so the chat
-      // UI (bubbles, typing indicator, multi-turn) is fully verifiable the
-      // moment someone runs `npm start`, before they've added a key.
-      console.warn('ANTHROPIC_API_KEY not set — replying in demo mode. See .env.example.');
+      const lastUserMessage = [...messages].reverse().find((m) => m && m.role === 'user' && typeof m.content === 'string' && m.content.trim().length > 0);
+      console.warn('ANTHROPIC_API_KEY not set — replying in smart demo mode. See .env.example.');
       return res.json({
-        reply: "I'm running in demo mode right now because no ANTHROPIC_API_KEY is set on the server yet — add one to your .env file (see .env.example) and restart the server to get real, tailored answers from Claude. Once that's done, ask me anything about finding the right AI, performance reviews, the Community section, or requesting a quote."
+        reply: smartAgentFallback(lastUserMessage?.content || messages.map((m) => m?.content || '').join(' '))
       });
     }
 
@@ -587,7 +660,10 @@ app.post('/api/agent-chat', async (req, res) => {
     if (!response.ok) {
       const errText = await response.text();
       console.error('Anthropic API error:', response.status, errText);
-      return res.status(502).json({ error: 'Upstream AI request failed' });
+      const lastUserMessage = [...messages].reverse().find((m) => m && m.role === 'user' && typeof m.content === 'string' && m.content.trim().length > 0);
+      return res.status(502).json({
+        reply: smartAgentFallback(lastUserMessage?.content || messages.map((m) => m?.content || '').join(' '))
+      });
     }
 
     const data = await response.json();
@@ -601,7 +677,27 @@ app.post('/api/agent-chat', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`DINASTY server running on http://localhost:${PORT}`);
-});
+export function getListenErrorMessage(error, port) {
+  if (error && error.code === 'EADDRINUSE') {
+    return `Port ${port} is already in use. Stop the active process or change PORT and restart the server.`;
+  }
+  return error ? error.message : 'Server failed to start.';
+}
+
+export function startServer(port = Number(process.env.PORT) || 3000) {
+  const server = app.listen(port, () => {
+    console.log(`DINASTY server running on http://localhost:${port}`);
+  });
+
+  server.on('error', (error) => {
+    console.error(getListenErrorMessage(error, port));
+    process.exitCode = 1;
+  });
+
+  return server;
+}
+
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+if (isDirectRun) {
+  startServer(Number(process.env.PORT) || 3000);
+}

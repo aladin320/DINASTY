@@ -260,6 +260,61 @@ const CATEGORY_BEST = {
   automation: "zapier-ai", voice: "elevenlabs", design: "uizard"
 };
 
+const SMART_MATCH_LIBRARY = {
+  writing: ["claude", "grammarly", "notion-ai"],
+  image: ["midjourney", "dalle", "uizard"],
+  video: ["runway", "synthesia", "midjourney"],
+  music: ["suno", "elevenlabs", "gpt"],
+  coding: ["claude-code", "gh-copilot", "cursor"],
+  productivity: ["notion-ai", "otter", "ms-copilot"],
+  education: ["explainpaper", "notebooklm", "claude"],
+  research: ["perplexity", "notebooklm", "consensus"],
+  marketing: ["jasper", "copyai", "writesonic"],
+  business: ["glean", "cohere", "harvey"],
+  automation: ["zapier-ai", "gpt", "mistral"],
+  voice: ["elevenlabs", "otter", "gpt"],
+  design: ["uizard", "midjourney", "gpt"]
+};
+
+function highlightSmartMatch(category) {
+  const goal = category && SMART_MATCH_LIBRARY[category] ? category : 'coding';
+  const goalLabel = CATEGORY_LABELS[goal] || 'Coding';
+  const title = document.getElementById('smartMatchTitle');
+  const text = document.getElementById('smartMatchText');
+  const cards = document.getElementById('smartMatchCards');
+
+  if (!title || !text || !cards) return;
+
+  title.textContent = `Recommended for ${goalLabel.toLowerCase()} teams`;
+  text.textContent = `The strongest fit for ${goalLabel.toLowerCase()} work is based on speed, quality, and how naturally it slots into real workflows.`;
+
+  const matches = SMART_MATCH_LIBRARY[goal] || SMART_MATCH_LIBRARY.coding;
+  cards.innerHTML = matches.map((key, index) => {
+    const info = getAiInfo(key);
+    const rankLabel = index === 0 ? 'Best fit' : index === 1 ? 'Strong second' : 'Also smart';
+    return `
+      <button class="smart-match-card" type="button" data-smart-ai="${key}">
+        <span class="smart-match-rank">${rankLabel}</span>
+        <div class="smart-match-meta">
+          <span class="ai-mark smart-mark" style="--c:${index % 2 === 0 ? '#8FBFA3' : '#8B7CF6'};">${(info.name || 'A').charAt(0).toUpperCase()}</span>
+          <div>
+            <strong>${info.name}</strong>
+            <span>${info.vendor}</span>
+          </div>
+        </div>
+        <p>${info.why}</p>
+      </button>
+    `;
+  }).join('');
+
+  cards.querySelectorAll('[data-smart-ai]').forEach(button => {
+    button.addEventListener('click', () => {
+      const aiKey = button.dataset.smartAi;
+      openAiDetailModal(aiKey);
+    });
+  });
+}
+
 let currentCategory = null;
 
 // ---------- AI performance reviews (persisted via /api/reviews/:aiKey) ----------
@@ -566,14 +621,28 @@ aiSearch.addEventListener('input', () => {
 // Dev AI section instead of opening an empty modal.
 document.querySelectorAll('.category-card').forEach(card => {
   card.addEventListener('click', () => {
-    if (card.dataset.category === 'dev-ai') {
+    const selected = card.dataset.category;
+    if (selected) highlightSmartMatch(selected);
+    if (selected === 'dev-ai') {
       const devAiSectionEl = document.getElementById('devAiSection');
       if (devAiSectionEl) devAiSectionEl.scrollIntoView({ behavior: 'smooth' });
       return;
     }
-    openSignInModal(card.dataset.category);
+    openSignInModal(selected);
   });
 });
+
+document.querySelectorAll('[data-solution-target]').forEach(button => {
+  button.addEventListener('click', () => {
+    const target = button.dataset.solutionTarget;
+    if (target) {
+      highlightSmartMatch(target);
+      openSignInModal(target);
+    }
+  });
+});
+
+highlightSmartMatch('coding');
 
 const productQuoteBtn = document.getElementById('productQuoteBtn');
 const productTryBtn = document.getElementById('productTryBtn');
