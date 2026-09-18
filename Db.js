@@ -403,7 +403,7 @@ export function addUserComparison(userId, title, aiKeys) {
 export function listAdminReviews() {
   return db.prepare(`
     SELECT id, ai_key AS aiKey, author, rating, text, hidden, moderated, created_at
-    FROM reviews ORDER BY id DESC LIMIT 100
+    FROM reviews ORDER BY id DESC
   `).all();
 }
 export function deleteReview(id) {
@@ -425,7 +425,7 @@ export function listAdminProjects() {
            p.approved, p.featured, p.created_at, COUNT(c.id) AS commentCount
     FROM community_projects p
     LEFT JOIN project_comments c ON c.project_id = p.id
-    GROUP BY p.id ORDER BY p.id DESC LIMIT 100
+    GROUP BY p.id ORDER BY p.id DESC
   `).all();
 }
 export function updateProjectModeration(id, { approved, featured }) {
@@ -444,7 +444,7 @@ export function deleteProject(id) {
 export function listAdminQuotes() {
   return db.prepare(`
     SELECT id, name, company, email, phone, service, project, status, reply, created_at
-    FROM quote_requests ORDER BY id DESC LIMIT 100
+    FROM quote_requests ORDER BY id DESC
   `).all();
 }
 export function listAdminUsers() {
@@ -538,6 +538,13 @@ export function getDashboardData() {
     ORDER BY count DESC, service ASC
   `).all();
   const byService = Object.fromEntries(quoteServiceRows.map((row) => [row.service, row.count]));
+  const weeklyTrend = (tableName) => db.prepare(`
+    SELECT strftime('%Y-%W', created_at) AS week, COUNT(*) AS count
+    FROM ${tableName}
+    WHERE created_at >= datetime('now', '-56 days')
+    GROUP BY week
+    ORDER BY week ASC
+  `).all();
 
   return {
     reviews: {
@@ -566,6 +573,11 @@ export function getDashboardData() {
     aiTools: listAdminAiTools(),
     hero: {
       likes: getLikeCount()
+    },
+    trends: {
+      reviews: weeklyTrend('reviews'),
+      projects: weeklyTrend('community_projects'),
+      quotes: weeklyTrend('quote_requests')
     }
   };
 }

@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import { randomBytes, timingSafeEqual } from 'crypto';
 import path from 'path';
@@ -23,6 +24,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+export { app };
 app.disable('x-powered-by');
 app.use(helmet({
   contentSecurityPolicy: {
@@ -40,12 +42,16 @@ app.use(helmet({
   }
 }));
 
+export function getRateLimitMessage() {
+  return 'too many requests; slow down and try again in a minute';
+}
+
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'too many requests; try again later' }
+  message: { error: getRateLimitMessage() }
 });
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -54,11 +60,37 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'too many auth requests; try again later' }
 });
+const writeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: getRateLimitMessage() }
+});
+const agentChatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: getRateLimitMessage() }
+});
+const quoteStatuses = ['new', 'in-progress', 'replied', 'closed'];
+
+const quoteMailer = process.env.SMTP_HOST
+  ? nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } : undefined
+  })
+  : null;
 
 app.use(generalLimiter);
 app.use(express.json({ limit: '1mb' }));
 app.use('/api/auth', authLimiter);
 app.use('/api/admin/login', authLimiter);
+app.use(['/api/reviews', '/api/projects', '/api/hero', '/api/quote'], writeLimiter);
+app.use('/api/agent-chat', agentChatLimiter);
 const adminSessions = new Map();
 const authSessions = new Map();
 const loginRateLimits = new Map();
@@ -72,6 +104,10 @@ const FAILED_LOGIN_LOCK_MS = 15 * 60 * 1000;
 
 // Serve the frontend files from the project root, where index.html, style.css
 // and script.js live, so the browser's API calls stay same-origin.
+app.use(['/Dashboard.html', '/dashboard.html', '/UserDashboard.html', '/user-dashboard.html'], (_req, res, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  next();
+});
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/style.css', (_req, res) => res.sendFile(path.join(__dirname, 'style.css')));
 app.get('/script.js', (_req, res) => res.sendFile(path.join(__dirname, 'script.js')));
@@ -122,6 +158,7 @@ function clearAuthCookie(res) {
 }
 
 app.use((error, _req, res, _next) => {
+  void _next;
   console.error('Unhandled server error:', error);
   res.status(500).json({ error: 'internal server error' });
 });
@@ -375,8 +412,8 @@ app.post('/api/projects', (req, res) => {
   const description = cleanStr(req.body?.description, MAX_TEXT);
   const link = cleanStr(req.body?.link, 500) || '';
 
-  if (!title || !author || !aiKey || !description) {
-    return res.status(400).json({ error: 'title, author, aiKey and description are required' });
+  if (!title || !aiKey || !description) {
+    return res.status(400).json({ error: 'title, aiKey and description are required' });
   }
 
   res.status(201).json(addProject({ title, author, aiKey, description, link }));
@@ -440,6 +477,18 @@ app.post('/api/quote', (req, res) => {
   }
 
   const saved = addQuoteRequest({ name, company, email, phone, service, project });
+  if (quoteMailer && process.env.QUOTE_NOTIFICATION_EMAIL) {
+    quoteMailer.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: process.env.QUOTE_NOTIFICATION_EMAIL,
+      replyTo: email,
+      subject: `New DINASTY quote request from ${company}`,
+      text: [
+        `Name: ${name}`, `Company: ${company}`, `Email: ${email}`, `Phone: ${phone}`,
+        `Service: ${service}`, `Project: ${project}`, `Request ID: ${saved.id}`
+      ].join('\n')
+    }).catch((error) => console.error('Quote notification email failed:', error));
+  }
   res.status(201).json({ success: true, id: saved.id });
 });
 
@@ -448,6 +497,19 @@ app.post('/api/quote', (req, res) => {
 app.get('/api/dashboard', (req, res) => {
   if (!requireAdminAccess(req, res)) return;
   res.json(getDashboardData());
+});
+
+app.get('/api/admin/quotes.csv', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const rows = listQuoteRequests();
+  const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  const header = ['id', 'name', 'company', 'email', 'phone', 'service', 'project', 'status', 'reply', 'created_at'];
+  const csv = [header, ...rows.map((row) => header.map((field) => row[field]))]
+    .map((row) => row.map(escapeCsv).join(','))
+    .join('\r\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="dinasty-quote-requests.csv"');
+  res.send(`${csv}\r\n`);
 });
 
 function adminId(req, res) {
@@ -541,8 +603,7 @@ app.patch('/api/admin/quotes/:id', (req, res) => {
   const id = adminId(req, res);
   if (!id) return;
   const body = req.body || {};
-  const allowedStatuses = ['new', 'in-progress', 'replied', 'closed'];
-  if (body.status !== undefined && !allowedStatuses.includes(body.status)) {
+  if (body.status !== undefined && !quoteStatuses.includes(body.status)) {
     return res.status(400).json({ error: 'invalid quote status' });
   }
   if (body.reply !== undefined && typeof body.reply !== 'string') {
@@ -675,6 +736,14 @@ app.post('/api/agent-chat', async (req, res) => {
     console.error('Agent chat error:', err);
     res.status(500).json({ error: 'Something went wrong handling your message' });
   }
+});
+
+app.use((_req, res) => {
+  res.status(404).format({
+    html: () => res.sendFile(path.join(__dirname, '404.html')),
+    json: () => res.json({ error: 'route not found' }),
+    default: () => res.type('text').send('DINASTY: page not found')
+  });
 });
 
 export function getListenErrorMessage(error, port) {

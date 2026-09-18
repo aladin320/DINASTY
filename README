@@ -38,9 +38,11 @@ Open `.env` and configure:
 - `DATABASE_URL=./dinasty.db` for the SQLite database file
 - add your `ANTHROPIC_API_KEY` to get real answers from the "AI Agent"
   chat button (it runs in a demo mode without one)
+- optionally configure the SMTP variables in `.env.example` to email the team
+  when a quote request arrives; requests remain saved if delivery fails
 - authenticate with `POST /api/admin/login` using `{key: ADMIN_KEY}`, then
   send the real key as `x-admin-key: ADMIN_KEY` when calling
-  `GET /api/admin/quotes` or `GET /api/dashboard`
+  `GET /api/admin/quotes`, `GET /api/admin/quotes.csv`, or `GET /api/dashboard`
 
 ## Run
 
@@ -53,6 +55,23 @@ a file; the frontend talks to the backend over `fetch()`, which needs a
 real server to answer it.
 
 `npm run dev` restarts the server automatically on file changes.
+
+## Deployment
+
+For Docker, build and run the included image:
+
+```bash
+docker build -t dinasty .
+docker run --env-file .env -p 3000:3000 -v dinasty-data:/app/data dinasty
+```
+
+Set `DATABASE_URL=/app/data/dinasty.db` when using the volume. Docker monitors
+`GET /api/health` through the image health check. For a traditional Linux host,
+run `npm ci --omit=dev`, set `NODE_ENV=production`, and use a process manager
+such as `systemd` or PM2 to restart `npm start` and send logs to the host.
+Put a TLS reverse proxy such as Nginx or Caddy in front of the app and keep
+`ADMIN_KEY`, SMTP credentials, and API keys in the host environment rather
+than committing them.
 
 ## Database
 

@@ -110,10 +110,10 @@ async function loadHero() {
 
 postCommentBtn.addEventListener('click', async () => {
   const text = commentInput.value.trim();
-  if (!text) return;
+  if (!text || !requireSignedInForAction()) return;
   postCommentBtn.disabled = true;
   try {
-    const saved = await apiPost('/api/hero/comments', { author: getCurrentUserName(), text });
+    const saved = await apiPost('/api/hero/comments', { text });
     renderHeroComment(saved, { prepend: true });
     commentInput.value = '';
     updateCommentCount();
@@ -383,11 +383,11 @@ starInput.addEventListener('click', (e) => {
 postReviewBtn.addEventListener('click', async () => {
   const text = reviewInput.value.trim();
   const rating = Number(starInput.dataset.rating);
-  if (!text || !rating || !selectedAI) return;
+  if (!text || !rating || !selectedAI || !requireSignedInForAction()) return;
 
   postReviewBtn.disabled = true;
   try {
-    await apiPost(`/api/reviews/${encodeURIComponent(selectedAI)}`, { author: getCurrentUserName(), rating, text });
+    await apiPost(`/api/reviews/${encodeURIComponent(selectedAI)}`, { rating, text });
     await loadReviews(selectedAI);
     reviewInput.value = '';
     setStarRating(0);
@@ -489,6 +489,14 @@ function getCurrentUser() {
 
 function getCurrentUserName() {
   return getCurrentUser()?.name || 'You';
+}
+
+function requireSignedInForAction() {
+  if (!getCurrentUser()) {
+    openSignInModal(null);
+    return false;
+  }
+  return true;
 }
 
 function updateSignInButton() {
@@ -1077,11 +1085,11 @@ document.addEventListener('keydown', (e) => {
 
 postProjectCommentBtn.addEventListener('click', async () => {
   const text = projectCommentInput.value.trim();
-  if (!text || !activeProjectId) return;
+  if (!text || !activeProjectId || !requireSignedInForAction()) return;
 
   postProjectCommentBtn.disabled = true;
   try {
-    await apiPost(`/api/projects/${activeProjectId}/comments`, { author: getCurrentUserName(), text });
+    await apiPost(`/api/projects/${activeProjectId}/comments`, { text });
     const project = await apiGet(`/api/projects/${activeProjectId}`);
     renderProjectComments(project.comments);
     projectCommentInput.value = '';
@@ -1136,6 +1144,7 @@ document.addEventListener('keydown', (e) => {
 
 shareForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!requireSignedInForAction()) return;
   const data = Object.fromEntries(new FormData(shareForm).entries());
   const submitBtn = shareForm.querySelector('.quote-submit');
   submitBtn.disabled = true;
@@ -1143,7 +1152,6 @@ shareForm.addEventListener('submit', async (e) => {
   try {
     await apiPost('/api/projects', {
       title: data.title,
-      author: data.author,
       aiKey: data.ai,
       description: data.description,
       link: data.link || ''
@@ -1184,23 +1192,23 @@ const docsBtn = document.getElementById('docsBtn');
 const DOCS_CONTENT = {
   documentation: {
     icon: "📖", label: "DOCUMENTATION", title: "Understand DINASTY",
-    description: "Learn how DINASTY helps you discover, understand, and choose AI tools based on what you want to accomplish.",
+    description: "DINASTY turns a work goal into a focused AI recommendation, then gives you the context to judge whether that tool belongs in your workflow.",
     sections: [
-      { title: "Getting Started", text: "Start by choosing a goal such as writing, coding, research, design, productivity, or automation. DINASTY then helps you identify AI tools that match that goal." },
-      { title: "Discover AI Tools", text: "Explore AI tools by category instead of searching for a specific product name. This makes AI easier to understand for beginners and experienced users." },
-      { title: "Tool Profiles", text: "Each AI tool can be explained through what it does, how it works, what it is best for, and why you might choose it." },
-      { title: "AI Categories", text: "Explore AI across Writing, Image Generation, Video, Music, Coding, Productivity, Education, Research, Marketing, Business, Automation, Voice, and Design." }
+      { title: "Start with the job", text: "Choose a goal card on the homepage, such as Coding, Research, Writing, or Design. DINASTY opens the strongest starting recommendation for that job instead of making you guess which product name to search." },
+      { title: "Read the tool profile", text: "Use each profile's plain-language explanation, best-fit tasks, model details, pricing notes, and capability flags to decide whether it fits your team, budget, and workflow." },
+      { title: "Check real performance", text: "Open Performance Reviews inside a tool detail view to see the average rating and comments from signed-in users. Add your own review after you have used the tool in a real task." },
+      { title: "Move from discovery to action", text: "Save useful tools, create comparisons in your workspace, open the vendor site when you are ready to try one, or submit Request a quote when your team needs a tailored AI service." }
     ]
   },
   learning: {
     icon: "🧠", label: "AI LEARNING", title: "Learn Artificial Intelligence",
-    description: "Build your understanding of AI from fundamental concepts to modern generative AI systems.",
+    description: "Learn the ideas you need to evaluate AI tools clearly, from model capabilities to the practical limits that matter in production.",
     sections: [
-      { title: "AI Fundamentals", text: "Learn the basic ideas behind Artificial Intelligence, machine learning, models, data, and automated decision-making." },
-      { title: "Generative AI", text: "Understand how AI can generate text, images, audio, video, code, and other types of content from instructions or prompts." },
-      { title: "Prompt Engineering", text: "Learn how to communicate effectively with AI systems by writing clear instructions, providing context, defining constraints, and describing the desired result." },
-      { title: "AI Agents", text: "Understand how AI agents can use tools, reason through tasks, and perform multiple steps toward a goal." },
-      { title: "Responsible AI", text: "Learn about AI limitations, verification, privacy, bias, copyright, and responsible use of AI-generated information." }
+      { title: "Models are not interchangeable", text: "A larger context window, stronger reasoning, faster responses, lower cost, and better multimodal support each solve different problems. Compare the capability that your workflow actually needs." },
+      { title: "Prompts are specifications", text: "Give an AI tool the task, relevant context, constraints, examples, and a definition of done. For coding work, include the repository conventions and the test or behavior that should prove the change." },
+      { title: "Agents need boundaries", text: "An agent can plan and use tools across several steps, but production workflows still need permissions, review points, observable output, and a way to recover when its assumptions are wrong." },
+      { title: "Verify before shipping", text: "Treat generated code, research, images, and business decisions as drafts until a person checks accuracy, privacy, security, licensing, and whether the result meets the intended outcome." },
+      { title: "Use DINASTY's evidence", text: "Combine the tool profile with performance reviews, comparison categories, and a small trial task. The best choice is the one that performs reliably for your team, not the one with the loudest launch announcement." }
     ]
   },
   guides: {
@@ -1216,13 +1224,13 @@ const DOCS_CONTENT = {
   },
   comparisons: {
     icon: "⚖️", label: "AI COMPARISONS", title: "Compare AI Tools",
-    description: "Compare AI products based on their purpose, capabilities, usability, pricing, and strengths.",
+    description: "DINASTY comparisons are organized around the work you need to accomplish, so you can weigh practical trade-offs instead of collecting feature lists.",
     sections: [
-      { title: "Chat & Writing", text: "Compare general AI assistants and writing tools based on writing quality, reasoning, context handling, research capabilities, and workflow integration." },
-      { title: "Coding", text: "Compare AI coding assistants based on code generation, debugging, IDE integration, repository understanding, and developer workflow." },
-      { title: "Image Generation", text: "Compare image generation tools based on visual quality, prompt control, style, editing capabilities, and creative flexibility." },
-      { title: "Video", text: "Compare AI video platforms based on generation quality, editing features, avatars, animation, and production workflows." },
-      { title: "Research", text: "Compare AI research tools based on source quality, citations, academic coverage, summarization, and research workflows." }
+      { title: "Coding assistants", text: "Compare repository awareness, edit quality, debugging help, IDE or terminal integration, reviewability, and how much control the developer keeps over changes." },
+      { title: "Writing and research", text: "Compare instruction following, tone control, context handling, source quality, citation behavior, and the effort required to verify the output." },
+      { title: "Creative tools", text: "Compare image and video tools by controllability, consistency across a set, editing workflow, output rights, and whether the result is usable without extensive cleanup." },
+      { title: "Team adoption", text: "Look beyond the demo: check pricing, privacy posture, admin controls, API availability, learning curve, and whether the tool fits the systems your team already uses." },
+      { title: "Make a saved decision", text: "Use the workspace comparison flow to record the tools you evaluated and why. Revisit it after a trial instead of relying on memory or a single benchmark." }
     ]
   }
 };

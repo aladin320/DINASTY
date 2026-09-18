@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="googlebot" content="noindex, nofollow, noarchive">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%238FBFA3'/%3E%3Cstop offset='100%25' stop-color='%233E5A4C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' fill='%230F1513' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
 <title>DINASTY — Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,6 +46,8 @@
     border-radius: 8px; padding: 10px 18px; font-size: 13.5px; cursor: pointer; font-family: var(--font-body);
   }
   .dash-gate-error{ color: #E17B6B; font-size: 13px; margin-top: 12px; min-height: 18px; }
+  .dash-remember{ display:inline-flex; align-items:center; gap:7px; margin-top:12px; color:var(--ink-faint); font-size:12px; cursor:pointer; }
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
   /* ---------- Stat cards ---------- */
   .dash-stats{ display:grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 24px; }
@@ -93,6 +98,19 @@
 
   .dash-manage-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:18px; margin-top:18px; }
   .dash-manage-list{ display:flex; flex-direction:column; gap:12px; }
+  .dash-manage-controls{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:0 0 16px; }
+  .dash-manage-controls input{ min-width:130px; flex:1; background:var(--panel-2); border:1px solid var(--line); border-radius:6px; color:var(--ink); padding:7px 9px; font:12px var(--font-body); }
+  .dash-manage-controls input:focus{ outline:none; border-color:var(--sage-dim); }
+  .dash-page-button{ border:1px solid var(--line); background:var(--panel-2); color:var(--ink-dim); border-radius:6px; padding:6px 8px; font:600 11px var(--font-body); cursor:pointer; }
+  .dash-page-button:disabled{ opacity:.45; cursor:default; }
+  .dash-page-label{ min-width:44px; text-align:center; color:var(--ink-faint); font:11px var(--font-mono); }
+  .dash-trend-chart{ display:grid; grid-template-columns:repeat(8,1fr); align-items:end; gap:8px; min-height:130px; }
+  .dash-trend-week{ display:flex; flex-direction:column; align-items:center; justify-content:end; gap:5px; min-width:0; height:130px; }
+  .dash-trend-stack{ display:flex; align-items:end; gap:2px; height:100px; width:100%; }
+  .dash-trend-bar{ flex:1; min-height:2px; border-radius:3px 3px 0 0; }
+  .dash-trend-label{ color:var(--ink-faint); font:9px var(--font-mono); overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .dash-trend-legend{ display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; color:var(--ink-faint); font-size:11px; }
+  .dash-trend-legend span::before{ content:''; display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--trend-color); margin-right:5px; }
   .dash-manage-item{ border-bottom:1px solid var(--line); padding-bottom:12px; }
   .dash-manage-item:last-child{ border-bottom:none; padding-bottom:0; }
   .dash-manage-title{ color:var(--ink); font-size:13px; font-weight:600; margin:0 0 3px; }
@@ -137,9 +155,11 @@
     <h2>Admin dashboard</h2>
     <p>This shows real numbers from your database — reviews, community projects, and quote requests. Enter the <code>ADMIN_KEY</code> you set in your <code>.env</code> file to unlock it.</p>
     <div class="dash-gate-row">
+      <label class="sr-only" for="dashKeyInput">Admin key</label>
       <input type="password" id="dashKeyInput" placeholder="Admin key" autocomplete="off">
       <button id="dashUnlockBtn">Unlock</button>
     </div>
+    <label class="dash-remember"><input type="checkbox" id="dashRemember"> Remember this device</label>
     <p class="dash-gate-error" id="dashGateError"></p>
   </div>
 
@@ -152,11 +172,19 @@
       <div style="display:flex;align-items:center;gap:14px;">
         <span class="dash-updated" id="dashUpdated"><span class="pulse-dot" style="position:static;"></span></span>
         <button class="dash-refresh" id="dashRefreshBtn">Refresh</button>
+        <button class="dash-refresh" id="dashExportBtn">Export quotes CSV</button>
         <button class="dash-logout" id="dashLogoutBtn">Log out</button>
       </div>
     </div>
 
     <div class="dash-stats" id="dashStats"></div>
+
+    <div class="dash-panel dash-trend-panel" style="--dash-accent:#5CC8E0;">
+      <h3>Activity over the last eight weeks</h3>
+      <p class="dash-panel-sub">Weekly submissions across reviews, projects, and quote requests</p>
+      <div class="dash-trend-chart" id="dashTrendChart"></div>
+      <div class="dash-trend-legend"><span style="--trend-color:#8FBFA3">Reviews</span><span style="--trend-color:#7F77DD">Projects</span><span style="--trend-color:#E17B6B">Quotes</span></div>
+    </div>
 
     <div class="dash-grid">
       <div class="dash-panel" style="--dash-accent:#8FBFA3;">
@@ -192,16 +220,19 @@
       <section class="dash-panel" style="--dash-accent:#E3A76B;">
         <h3>Reviews</h3>
         <p class="dash-panel-sub">View and moderate performance reviews</p>
+        <div class="dash-manage-controls"><input id="reviewsSearch" type="search" placeholder="Search reviews" aria-label="Search reviews"><button class="dash-page-button" id="reviewsPrev">Previous</button><span class="dash-page-label" id="reviewsPage">1 / 1</span><button class="dash-page-button" id="reviewsNext">Next</button></div>
         <div class="dash-manage-list" id="dashReviewManagement"></div>
       </section>
       <section class="dash-panel" style="--dash-accent:#8FBFA3;">
         <h3>Projects</h3>
         <p class="dash-panel-sub">Approve, feature, or remove community work</p>
+        <div class="dash-manage-controls"><input id="projectsSearch" type="search" placeholder="Search projects" aria-label="Search projects"><button class="dash-page-button" id="projectsPrev">Previous</button><span class="dash-page-label" id="projectsPage">1 / 1</span><button class="dash-page-button" id="projectsNext">Next</button></div>
         <div class="dash-manage-list" id="dashProjectManagement"></div>
       </section>
       <section class="dash-panel" style="--dash-accent:#E17B6B;">
         <h3>Quotes</h3>
         <p class="dash-panel-sub">Manage requests and customer replies</p>
+        <div class="dash-manage-controls"><input id="quotesSearch" type="search" placeholder="Search quotes" aria-label="Search quotes"><button class="dash-page-button" id="quotesPrev">Previous</button><span class="dash-page-label" id="quotesPage">1 / 1</span><button class="dash-page-button" id="quotesNext">Next</button></div>
         <div class="dash-manage-list" id="dashQuoteManagement"></div>
       </section>
     </div>
@@ -229,6 +260,12 @@
 <script>
 const KEY_STORAGE = 'dinasty_admin_key';
 const RATING_COLORS = ['#E17B6B', '#E3A76B', '#E3C36B', '#A9C98F', '#8FBFA3'];
+const MANAGEMENT_PAGE_SIZE = 6;
+const managementState = {
+  reviews: { page: 1, query: '' },
+  projects: { page: 1, query: '' },
+  quotes: { page: 1, query: '' }
+};
 let currentAdminKey = null;
 
 function formatAiName(key) {
@@ -306,16 +343,65 @@ function managementItem(title, meta, actions) {
   return item;
 }
 
+function renderManagementList(type, items, elementId, renderItem) {
+  const state = managementState[type];
+  const list = document.getElementById(elementId);
+  const query = state.query.trim().toLowerCase();
+  const filtered = query
+    ? items.filter((item) => Object.values(item).some((value) => String(value ?? '').toLowerCase().includes(query)))
+    : items;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / MANAGEMENT_PAGE_SIZE));
+  state.page = Math.min(state.page, pageCount);
+  const start = (state.page - 1) * MANAGEMENT_PAGE_SIZE;
+  list.innerHTML = '';
+  filtered.slice(start, start + MANAGEMENT_PAGE_SIZE).forEach((item) => list.appendChild(renderItem(item)));
+  if (!list.children.length) list.innerHTML = `<p class="dash-empty">No ${type} found.</p>`;
+  document.getElementById(`${type}Page`).textContent = `${state.page} / ${pageCount}`;
+  document.getElementById(`${type}Prev`).disabled = state.page === 1;
+  document.getElementById(`${type}Next`).disabled = state.page === pageCount;
+}
+
+function renderTrendChart(trends) {
+  const chart = document.getElementById('dashTrendChart');
+  const series = [
+    { key: 'reviews', color: '#8FBFA3' },
+    { key: 'projects', color: '#7F77DD' },
+    { key: 'quotes', color: '#E17B6B' }
+  ];
+  const weeks = [...new Set(series.flatMap(({ key }) => trends[key].map((row) => row.week)))].sort().slice(-8);
+  const values = Object.fromEntries(series.map(({ key }) => [key, Object.fromEntries(trends[key].map((row) => [row.week, row.count]))]));
+  const max = Math.max(1, ...series.flatMap(({ key }) => weeks.map((week) => values[key][week] || 0)));
+  chart.innerHTML = '';
+  if (!weeks.length) { chart.innerHTML = '<p class="dash-empty">No activity yet.</p>'; return; }
+  weeks.forEach((week) => {
+    const column = document.createElement('div');
+    column.className = 'dash-trend-week';
+    const stack = document.createElement('div');
+    stack.className = 'dash-trend-stack';
+    series.forEach(({ key, color }) => {
+      const bar = document.createElement('span');
+      bar.className = 'dash-trend-bar';
+      bar.style.height = `${Math.max(2, ((values[key][week] || 0) / max) * 100)}%`;
+      bar.style.background = color;
+      bar.title = `${key}: ${values[key][week] || 0}`;
+      stack.appendChild(bar);
+    });
+    const label = document.createElement('span');
+    label.className = 'dash-trend-label';
+    label.textContent = week.slice(5);
+    column.append(stack, label);
+    chart.appendChild(column);
+  });
+}
+
 async function refreshManagement() {
   const data = await fetchDashboard(currentAdminKey);
+  currentDashboardData = data;
   renderManagement(data);
 }
 
 function renderManagement(data) {
-  const reviewEl = document.getElementById('dashReviewManagement');
-  reviewEl.innerHTML = '';
-  data.reviews.management.forEach((review) => {
-    reviewEl.appendChild(managementItem(
+  renderManagementList('reviews', data.reviews.management, 'dashReviewManagement', (review) => managementItem(
       `${formatAiName(review.aiKey)} · ${review.rating}★`,
       `${review.author} · ${timeAgo(review.created_at)}${review.hidden ? ' · hidden' : ''}${review.moderated ? ' · moderated' : ''}`,
       [
@@ -325,13 +411,7 @@ function renderManagement(data) {
         actionButton('Delete', async () => { if (confirm('Delete this review?')) { await adminRequest(`/api/admin/reviews/${review.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)
       ]
     ));
-  });
-  if (!reviewEl.children.length) reviewEl.innerHTML = '<p class="dash-empty">No reviews.</p>';
-
-  const projectEl = document.getElementById('dashProjectManagement');
-  projectEl.innerHTML = '';
-  data.projects.management.forEach((project) => {
-    projectEl.appendChild(managementItem(
+  renderManagementList('projects', data.projects.management, 'dashProjectManagement', (project) => managementItem(
       project.title,
       `${project.author} · ${formatAiName(project.aiKey)} · ${project.approved ? 'approved' : 'pending'}${project.featured ? ' · featured' : ''}`,
       [
@@ -341,13 +421,7 @@ function renderManagement(data) {
         actionButton('Delete', async () => { if (confirm('Delete this project and its comments?')) { await adminRequest(`/api/admin/projects/${project.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)
       ]
     ));
-  });
-  if (!projectEl.children.length) projectEl.innerHTML = '<p class="dash-empty">No projects.</p>';
-
-  const quoteEl = document.getElementById('dashQuoteManagement');
-  quoteEl.innerHTML = '';
-  data.quotes.management.forEach((quote) => {
-    quoteEl.appendChild(managementItem(
+  renderManagementList('quotes', data.quotes.management, 'dashQuoteManagement', (quote) => managementItem(
       quote.company,
       `${quote.name} · ${quote.project} · ${quote.status}`,
       [
@@ -356,10 +430,7 @@ function renderManagement(data) {
         actionButton('Reply', async () => { const reply = prompt('Reply to this quote request', quote.reply || ''); if (reply !== null) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'PATCH', body: JSON.stringify({ reply, status: 'replied' }) }); await refreshManagement(); } }),
         actionButton('Delete', async () => { if (confirm('Delete this quote request?')) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)
       ]
-    ));
-  });
-  if (!quoteEl.children.length) quoteEl.innerHTML = '<p class="dash-empty">No quotes.</p>';
-
+      ));
   const userEl = document.getElementById('dashUserManagement');
   userEl.innerHTML = '';
   data.users.management.forEach((user) => userEl.appendChild(managementItem(user.name, `${user.email} · ${user.role} · joined ${timeAgo(user.created_at)}`, [])));
@@ -536,9 +607,11 @@ async function loadDashboard(key) {
   if (btn) btn.disabled = true;
   try {
     const data = await fetchDashboard(key);
+    currentDashboardData = data;
     renderStats(data);
     renderBarChart(data.reviews.perAi);
     renderDonut(data.reviews.distribution);
+    renderTrendChart(data.trends);
     renderProjects(data.projects.recent);
     renderQuotes(data.quotes.recent, data.quotes.byService);
     renderManagement(data);
@@ -557,12 +630,17 @@ async function loadDashboard(key) {
   }
 }
 
+function storedAdminKey() {
+  return localStorage.getItem(KEY_STORAGE) || sessionStorage.getItem(KEY_STORAGE);
+}
+
 document.getElementById('dashUnlockBtn').addEventListener('click', () => {
   const key = document.getElementById('dashKeyInput').value.trim();
   if (!key) return;
   loginAdmin(key)
     .then(() => {
-      sessionStorage.setItem(KEY_STORAGE, key);
+      const storage = document.getElementById('dashRemember').checked ? localStorage : sessionStorage;
+      storage.setItem(KEY_STORAGE, key);
       document.getElementById('dashKeyInput').value = '';
       return loadDashboard(key);
     })
@@ -576,10 +654,22 @@ document.getElementById('dashKeyInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('dashUnlockBtn').click();
 });
 document.getElementById('dashRefreshBtn').addEventListener('click', () => {
-  const key = sessionStorage.getItem(KEY_STORAGE);
+  const key = storedAdminKey();
   if (key) loadDashboard(key);
 });
+document.getElementById('dashExportBtn').addEventListener('click', async () => {
+  const response = await fetch('/api/admin/quotes.csv', { headers: { 'x-admin-key': currentAdminKey } });
+  if (!response.ok) { alert('Could not export quote requests.'); return; }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'dinasty-quote-requests.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+});
 document.getElementById('dashLogoutBtn').addEventListener('click', () => {
+  localStorage.removeItem(KEY_STORAGE);
   sessionStorage.removeItem(KEY_STORAGE);
   document.getElementById('dashKeyInput').value = '';
   document.getElementById('dashGateError').textContent = '';
@@ -588,7 +678,25 @@ document.getElementById('dashLogoutBtn').addEventListener('click', () => {
 });
 
 // Auto-unlock if a key is already stored for this browser tab.
-const storedKey = sessionStorage.getItem(KEY_STORAGE);
+['reviews', 'projects', 'quotes'].forEach((type) => {
+  document.getElementById(`${type}Search`).addEventListener('input', (event) => {
+    managementState[type].query = event.target.value;
+    managementState[type].page = 1;
+    if (currentDashboardData) renderManagement(currentDashboardData);
+  });
+  document.getElementById(`${type}Prev`).addEventListener('click', () => {
+    managementState[type].page -= 1;
+    if (currentDashboardData) renderManagement(currentDashboardData);
+  });
+  document.getElementById(`${type}Next`).addEventListener('click', () => {
+    managementState[type].page += 1;
+    if (currentDashboardData) renderManagement(currentDashboardData);
+  });
+});
+
+let currentDashboardData = null;
+const storedKey = storedAdminKey();
+document.getElementById('dashRemember').checked = Boolean(localStorage.getItem(KEY_STORAGE));
 if (storedKey) loadDashboard(storedKey);
 </script>
 </body>
