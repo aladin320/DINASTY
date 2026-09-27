@@ -204,7 +204,7 @@ const DN_NODES = {
     icon: '🖥️', accent: '#8FBFA3',
     title: 'Browser (client)',
     desc: 'Renders the UI and talks to the server only through fetch() calls. No secrets or business logic live here.',
-    facts: ['Files: index.html, style.css, script.js', 'The 46-tool AI catalog is static config, not user data', 'Every read and write goes through the REST API']
+    facts: ['Files: index.html, style.css, script.js', 'The catalog is loaded from the database through /api/tools', 'Every read and write goes through the REST API']
   },
   server: {
     icon: '⚙️', accent: '#8FBFA3',
@@ -216,7 +216,7 @@ const DN_NODES = {
     icon: '🗄️', accent: '#7F77DD',
     title: 'SQLite database (db.js)',
     desc: 'Stores everything users generate, so it survives restarts instead of resetting on every page load.',
-    facts: ['Tables: ai_reviews, projects, project_comments, hero_comments, hero_likes, quote_requests', 'Powered by better-sqlite3 — a single local file', 'Seeded with demo data the first time it runs']
+    facts: ['Tables: ai_tools, tool_suggestions, reviews, projects, quotes, and users', 'Powered by better-sqlite3 — a single local file', 'Catalog changes and moderation persist without a code deploy']
   },
   api: {
     icon: '🤖', accent: '#E17B6B',

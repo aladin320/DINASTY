@@ -4,8 +4,10 @@ DINASTY is a goal-based AI tool discovery platform for software teams. It combin
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20 LTS
 - npm
+
+> This project relies on better-sqlite3, which must run on Node 20 for compatibility with the native binary in this repo. Using newer Node versions can fail with an ABI mismatch.
 
 ## Setup
 

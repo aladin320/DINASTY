@@ -36,6 +36,10 @@ async function apiPost(url, body) {
   return res.json();
 }
 
+function trackAnalytics(eventName, aiKey = '', category = '') {
+  return apiPost('/api/analytics/events', { eventName, aiKey, category }).catch(() => undefined);
+}
+
 // ---------- Like button (persisted via /api/hero) ----------
 const likeBtn = document.getElementById('likeBtn');
 const likeCount = document.getElementById('likeCount');
@@ -242,8 +246,11 @@ const DEV_AI_CATEGORIES = {
 };
 
 function getAiInfo(key) {
-  return AI_INFO[key] || { name: key, vendor: "", how: "Details coming soon.", why: "Details coming soon.", category: "", url: null };
+  return catalogByKey[key] || AI_INFO[key] || { name: key, vendor: "", how: "Details coming soon.", why: "Details coming soon.", category: "", url: null };
 }
+
+let catalogByKey = {};
+const compareSelection = new Set();
 
 const CATEGORY_LABELS = {
   writing: "Writing", image: "Image Generation", video: "Video", music: "Music",
@@ -463,6 +470,10 @@ const aiPickerView = document.getElementById('aiPickerView');
 const modalSubtext = document.getElementById('modalSubtext');
 const aiSearch = document.getElementById('aiSearch');
 const aiGrid = document.getElementById('aiGrid');
+const catalogPricing = document.getElementById('catalogPricing');
+const catalogOwnership = document.getElementById('catalogOwnership');
+const catalogIntegration = document.getElementById('catalogIntegration');
+const compareToolsBtn = document.getElementById('compareToolsBtn');
 const aiDetail = document.getElementById('aiDetail');
 const detailBackBtn = document.getElementById('detailBackBtn');
 const detailMark = document.getElementById('detailMark');
@@ -479,16 +490,39 @@ const confirmNoBtn = document.getElementById('confirmNoBtn');
 let selectedAI = null;
 let pendingCategory = null;
 
+function renderCatalog(tools) {
+  catalogByKey = Object.fromEntries(tools.map((tool) => [tool.slug, {
+    ...tool, url: tool.website, bestFor: tool.bestFor || [], integrations: tool.integrations || [],
+    how: tool.how || tool.description, why: tool.why || tool.description
+  }]));
+  aiGrid.innerHTML = tools.map((tool) => `
+    <div class="ai-option" role="button" tabindex="0" data-ai="${tool.slug}" data-category="${tool.category}">
+      <span class="ai-mark" style="--c:#8FBFA3">${(tool.name || 'A').charAt(0).toUpperCase()}</span>
+      <span class="ai-info"><span class="ai-name">${tool.name}</span><span class="ai-vendor">${tool.vendor || ''}</span></span>
+      <button type="button" class="compare-toggle" data-compare-ai="${tool.slug}" aria-label="Add ${tool.name} to comparison">Compare</button>
+    </div>`).join('');
+  updateCompareButton();
+}
+
+async function loadCatalog(filters = {}) {
+  const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value));
+  const response = await fetch(`/api/tools?${params}`);
+  if (!response.ok) throw new Error('Could not load the AI catalog');
+  const tools = await response.json();
+  renderCatalog(pendingCategory ? tools.filter((tool) => tool.category === pendingCategory) : tools);
+}
+
+function updateCompareButton() {
+  compareToolsBtn.hidden = compareSelection.size < 2;
+  compareToolsBtn.textContent = `Compare selected tools (${compareSelection.size})`;
+}
+
 function getCurrentUser() {
   try {
     return JSON.parse(localStorage.getItem('dinastyUser')) || null;
-  } catch (_err) {
+  } catch {
     return null;
   }
-}
-
-function getCurrentUserName() {
-  return getCurrentUser()?.name || 'You';
 }
 
 function requireSignedInForAction() {
@@ -501,8 +535,8 @@ function requireSignedInForAction() {
 
 function updateSignInButton() {
   const user = getCurrentUser();
-  signInBtn.textContent = user ? user.name : 'Sign in';
-  signInBtn.setAttribute('aria-label', user ? `Signed in as ${user.name}` : 'Sign in');
+  signInBtn.textContent = user ? 'My account' : 'Account';
+  signInBtn.setAttribute('aria-label', user ? `Open account for ${user.name}` : 'Create or sign in to your account');
 }
 
 function showIdentityView() {
@@ -543,6 +577,7 @@ function openSignInModal(category) {
   signInOverlay.classList.add('open');
   document.body.style.overflow = 'hidden';
   onModalOpen(signInOverlay);
+  trackAnalytics('modal_open', '', category || '');
   requestAnimationFrame(() => identityName.focus());
 }
 
@@ -605,7 +640,13 @@ identityForm.addEventListener('submit', async (event) => {
   }
 });
 
-signInBtn.addEventListener('click', () => openSignInModal(null));
+signInBtn.addEventListener('click', () => {
+  if (getCurrentUser()) {
+    window.location.href = 'UserDashboard.html';
+    return;
+  }
+  openSignInModal(null);
+});
 modalCloseBtn.addEventListener('click', closeSignInModal);
 
 signInOverlay.addEventListener('click', (e) => {
@@ -617,12 +658,25 @@ document.addEventListener('keydown', (e) => {
 });
 
 aiSearch.addEventListener('input', () => {
-  const q = aiSearch.value.trim().toLowerCase();
-  document.querySelectorAll('.ai-option').forEach(opt => {
-    const name = opt.querySelector('.ai-name').textContent.toLowerCase();
-    const vendor = opt.querySelector('.ai-vendor').textContent.toLowerCase();
-    opt.classList.toggle('hidden', Boolean(q) && !name.includes(q) && !vendor.includes(q));
-  });
+  loadCatalog({ q: aiSearch.value, pricing: catalogPricing.value, ownership: catalogOwnership.value, integration: catalogIntegration.value }).catch(console.error);
+});
+
+[catalogPricing, catalogOwnership, catalogIntegration].forEach((control) => control.addEventListener('input', () => {
+  loadCatalog({ q: aiSearch.value, pricing: catalogPricing.value, ownership: catalogOwnership.value, integration: catalogIntegration.value }).catch(console.error);
+}));
+
+aiGrid.addEventListener('click', (event) => {
+  const compareButton = event.target.closest('[data-compare-ai]');
+  if (!compareButton) return;
+  event.stopPropagation();
+  const slug = compareButton.dataset.compareAi;
+  if (compareSelection.has(slug)) compareSelection.delete(slug);
+  else if (compareSelection.size < 3) compareSelection.add(slug);
+  updateCompareButton();
+});
+
+compareToolsBtn.addEventListener('click', () => {
+  window.location.href = `/compare?tools=${encodeURIComponent([...compareSelection].join(','))}`;
 });
 
 // "Dev AI" isn't a real catalog category — it scrolls to the dedicated
@@ -671,12 +725,16 @@ function showDetail(option) {
   detailVendor.textContent = vendor;
   detailHow.textContent = info.how;
   detailWhy.textContent = info.why;
+  document.getElementById('saveToolBtn').textContent = 'Save tool';
+  document.getElementById('subscribeCategoryBtn').textContent = `Notify me about ${info.category || 'this'} tools`;
   confirmText.textContent = `This opens ${name}'s site in a new tab — continue?`;
   confirmBox.classList.remove('open');
 
   reviewInput.value = '';
   setStarRating(0);
   loadReviews(selectedAI);
+  trackAnalytics('tool_view', selectedAI, info.category || option.dataset.category || '');
+  if (getCurrentUser()) apiPost('/api/user/tool-views', { aiKey: selectedAI }).catch(console.error);
 
   aiGrid.classList.add('hidden-view');
   aiSearch.classList.add('hidden-view');
@@ -693,6 +751,8 @@ function openAiDetailModal(aiKey) {
   signInOverlay.classList.add('open');
   document.body.style.overflow = 'hidden';
   onModalOpen(signInOverlay);
+  const openedInfo = getAiInfo(aiKey);
+  trackAnalytics('modal_open', aiKey, openedInfo.category || '');
 
   const option = aiGrid.querySelector(`.ai-option[data-ai="${aiKey}"]`);
   if (option) {
@@ -732,12 +792,26 @@ requestSelectBtn.addEventListener('click', () => {
   confirmBox.classList.add('open');
 });
 
+document.getElementById('saveToolBtn').addEventListener('click', async () => {
+  if (!requireSignedInForAction()) return;
+  try { await apiPost('/api/user/saved-tools', { aiKey: selectedAI }); document.getElementById('saveToolBtn').textContent = 'Saved'; }
+  catch (error) { console.error('Could not save tool:', error); }
+});
+
+document.getElementById('subscribeCategoryBtn').addEventListener('click', async () => {
+  if (!requireSignedInForAction()) return;
+  const category = getAiInfo(selectedAI).category;
+  try { await apiPost('/api/user/subscriptions', { category }); document.getElementById('subscribeCategoryBtn').textContent = 'Notifications on'; }
+  catch (error) { console.error('Could not subscribe to category:', error); }
+});
+
 confirmNoBtn.addEventListener('click', () => {
   confirmBox.classList.remove('open');
 });
 
 confirmYesBtn.addEventListener('click', () => {
   const info = getAiInfo(selectedAI);
+  trackAnalytics('choose_ai', selectedAI, info.category || '');
   confirmBox.classList.remove('open');
   closeSignInModal();
 
@@ -754,6 +828,25 @@ const quoteOverlay = document.getElementById('quoteOverlay');
 const quoteCloseBtn = document.getElementById('quoteCloseBtn');
 const quoteForm = document.getElementById('quoteForm');
 const quoteSuccess = document.getElementById('quoteSuccess');
+const suggestToolBtn = document.getElementById('suggestToolBtn');
+const suggestToolOverlay = document.getElementById('suggestToolOverlay');
+const suggestToolClose = document.getElementById('suggestToolClose');
+const suggestToolForm = document.getElementById('suggestToolForm');
+const suggestToolMessage = document.getElementById('suggestToolMessage');
+
+suggestToolBtn.addEventListener('click', () => { suggestToolOverlay.classList.add('open'); onModalOpen(suggestToolOverlay); });
+suggestToolClose.addEventListener('click', () => { suggestToolOverlay.classList.remove('open'); onModalClose(suggestToolOverlay); });
+suggestToolForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const button = suggestToolForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    await apiPost('/api/tools/suggestions', Object.fromEntries(new FormData(suggestToolForm).entries()));
+    suggestToolForm.reset();
+    suggestToolMessage.textContent = 'Thanks. The DINASTY team will review this tool before publishing it.';
+  } catch (error) { suggestToolMessage.textContent = error.message; }
+  finally { button.disabled = false; }
+});
 
 function openQuoteModal() {
   quoteOverlay.classList.add('open');
@@ -1489,5 +1582,6 @@ devToolGrid.addEventListener("click", event => {
 
 // ---------- Initial data load ----------
 updateSignInButton();
+loadCatalog().catch((error) => console.error('Failed to load catalog:', error));
 loadHero();
 renderProjectGrid();

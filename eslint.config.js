@@ -12,6 +12,7 @@ export default [
       sourceType: 'module',
       globals: {
         ...globals.node,
+        ...globals.browser,
         test: 'readonly',
         describe: 'readonly',
         it: 'readonly',

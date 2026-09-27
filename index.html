@@ -31,12 +31,13 @@
     <li><a href="UserDashboard.html">My dashboard</a></li>
   </ul>
   <div class="nav-actions">
-    <button class="btn-ghost" id="signInBtn">Sign in</button>
+    <button class="btn-ghost" id="signInBtn">Account</button>
     <button class="btn-solid agent-trigger" id="aiAgentBtn">
       <span class="agent-trigger-dot"></span>
       AI Agent
     </button>
     <button class="btn-quote" id="requestQuoteBtn">Request a quote</button>
+    <button class="btn-ghost" id="suggestToolBtn">Suggest a tool</button>
   </div>
 </nav>
 
@@ -563,6 +564,12 @@
       <p class="modal-subtext" id="modalSubtext">Pick the model that powers your workspace. You can change this later in settings.</p>
 
     <input type="text" class="ai-search" id="aiSearch" placeholder="Search AI tools…">
+    <div class="catalog-filters" aria-label="Catalog filters">
+      <select id="catalogPricing" aria-label="Filter by pricing"><option value="">Any price</option><option value="free">Free</option><option value="freemium">Freemium</option><option value="paid">Paid</option></select>
+      <select id="catalogOwnership" aria-label="Filter by ownership"><option value="">Any ownership</option><option value="open-source">Open source</option><option value="proprietary">Proprietary</option></select>
+      <input type="text" id="catalogIntegration" placeholder="Integration, e.g. VS Code" aria-label="Filter by integration">
+    </div>
+    <button class="btn-ghost" id="compareToolsBtn" type="button" hidden>Compare selected tools</button>
 
     <div class="ai-grid" id="aiGrid">
       <button class="ai-option" data-ai="claude" data-category="writing">
@@ -773,6 +780,11 @@
         <p class="detail-text" id="detailWhy"></p>
       </div>
 
+      <div class="detail-actions">
+        <button class="btn-ghost" id="saveToolBtn" type="button">Save tool</button>
+        <button class="btn-ghost" id="subscribeCategoryBtn" type="button">Notify me about this category</button>
+      </div>
+
       <!-- Performance reviews: comments from people who actually used this AI -->
       <div class="detail-block detail-reviews">
         <div class="review-heading-row">
@@ -806,6 +818,14 @@
       </div>
     </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="suggestToolOverlay">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="suggestToolTitle">
+    <button class="modal-close" id="suggestToolClose" aria-label="Close">×</button>
+    <p class="modal-eyebrow">Keep the catalog current</p><h2 class="modal-title" id="suggestToolTitle">Suggest a tool</h2>
+    <form class="quote-form" id="suggestToolForm"><label for="suggestName">Tool name</label><input id="suggestName" name="name" required maxlength="200"><label for="suggestWebsite">Website</label><input id="suggestWebsite" name="website" type="url" required maxlength="500"><label for="suggestDescription">Why should DINASTY include it?</label><textarea id="suggestDescription" name="description" required maxlength="2000"></textarea><label for="suggestEmail">Your email (optional)</label><input id="suggestEmail" name="submitterEmail" type="email" maxlength="200"><button class="btn-quote" type="submit">Send suggestion</button><p id="suggestToolMessage" class="modal-subtext" role="status"></p></form>
   </div>
 </div>
 

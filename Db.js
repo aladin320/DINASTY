@@ -17,6 +17,7 @@ import 'dotenv/config';
 import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { CATALOG_SEED } from './catalog-seed.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // DATABASE_URL is a local SQLite file path in this project.
@@ -111,10 +112,36 @@ db.exec(`
     created_at TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS tool_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    ai_key TEXT NOT NULL,
+    viewed_at TEXT NOT NULL,
+    UNIQUE(user_id, ai_key)
+  );
+  CREATE TABLE IF NOT EXISTS category_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(user_id, category)
+  );
+
+  CREATE TABLE IF NOT EXISTS analytics_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_name TEXT NOT NULL,
+    ai_key TEXT NOT NULL DEFAULT '',
+    category TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at);
+  CREATE INDEX IF NOT EXISTS idx_analytics_events_funnel ON analytics_events(event_name, category);
+
     CREATE TABLE IF NOT EXISTS ai_tools (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       slug TEXT NOT NULL UNIQUE,
+      vendor TEXT NOT NULL DEFAULT '',
       category TEXT NOT NULL,
       description TEXT NOT NULL,
       website TEXT NOT NULL,
@@ -129,6 +156,24 @@ db.exec(`
       api_available INTEGER NOT NULL DEFAULT 0,
       privacy TEXT NOT NULL DEFAULT '',
       logo TEXT NOT NULL DEFAULT '',
+      how TEXT NOT NULL DEFAULT '',
+      why TEXT NOT NULL DEFAULT '',
+      best_for TEXT NOT NULL DEFAULT '[]',
+      integrations TEXT NOT NULL DEFAULT '[]',
+      open_source INTEGER NOT NULL DEFAULT 0,
+      retired INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS tool_suggestions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      website TEXT NOT NULL,
+      description TEXT NOT NULL,
+      submitter_email TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending',
+      admin_note TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -155,6 +200,13 @@ ensureColumn('community_projects', 'approved', 'INTEGER NOT NULL DEFAULT 1');
 ensureColumn('community_projects', 'featured', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumn('quote_requests', 'status', "TEXT NOT NULL DEFAULT 'new'");
 ensureColumn('quote_requests', 'reply', "TEXT NOT NULL DEFAULT ''");
+ensureColumn('ai_tools', 'how', "TEXT NOT NULL DEFAULT ''");
+ensureColumn('ai_tools', 'vendor', "TEXT NOT NULL DEFAULT ''");
+ensureColumn('ai_tools', 'why', "TEXT NOT NULL DEFAULT ''");
+ensureColumn('ai_tools', 'best_for', "TEXT NOT NULL DEFAULT '[]'");
+ensureColumn('ai_tools', 'integrations', "TEXT NOT NULL DEFAULT '[]'");
+ensureColumn('ai_tools', 'open_source', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('ai_tools', 'retired', 'INTEGER NOT NULL DEFAULT 0');
 
 // Migrate data from the original table names without deleting the old tables.
 // Keeping them makes this safe for existing local databases while all new
@@ -244,6 +296,21 @@ function seedIfEmpty() {
   }
 }
 seedIfEmpty();
+
+function seedCatalog() {
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO ai_tools (name, slug, vendor, category, description, website, how, why, best_for, integrations, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const now = new Date().toISOString();
+  const seed = db.transaction(() => CATALOG_SEED.forEach(([slug, name, vendor, category, website]) => insert.run(
+    name, slug, vendor, category, `${name} by ${vendor}. Discover how it fits your workflow and compare it with other tools in DINASTY.`, website,
+    `A ${category} tool from ${vendor}.`, `Choose ${name} when its ${category} workflow matches your team's needs.`,
+    JSON.stringify([category, vendor]), JSON.stringify(['Web']), now, now
+  )));
+  seed();
+}
+seedCatalog();
 
 // ---------- Reviews ----------
 export function listReviews(aiKey) {
@@ -383,7 +450,9 @@ export function getUserDashboardData(user) {
     SELECT id, title, ai_keys AS aiKeys, created_at FROM user_comparisons
     WHERE user_id = ? ORDER BY id DESC LIMIT 50
   `).all(user.id).map((comparison) => ({ ...comparison, aiKeys: JSON.parse(comparison.aiKeys) }));
-  return { user, reviews, projects, quotes, savedTools, comparisons };
+  const viewedTools = db.prepare('SELECT ai_key AS aiKey, viewed_at FROM tool_views WHERE user_id = ? ORDER BY viewed_at DESC LIMIT 50').all(user.id);
+  const subscriptions = listCategorySubscriptions(user.id);
+  return { user, reviews, projects, quotes, savedTools, comparisons, viewedTools, subscriptions };
 }
 
 export function saveTool(userId, aiKey) {
@@ -393,6 +462,30 @@ export function saveTool(userId, aiKey) {
 }
 export function removeSavedTool(userId, aiKey) {
   return db.prepare('DELETE FROM saved_tools WHERE user_id = ? AND ai_key = ?').run(userId, aiKey).changes > 0;
+}
+export function recordToolView(userId, aiKey) {
+  const viewedAt = new Date().toISOString();
+  db.prepare(`INSERT INTO tool_views (user_id, ai_key, viewed_at) VALUES (?,?,?)
+    ON CONFLICT(user_id, ai_key) DO UPDATE SET viewed_at = excluded.viewed_at`).run(userId, aiKey, viewedAt);
+  return db.prepare('SELECT ai_key AS aiKey, viewed_at FROM tool_views WHERE user_id = ? AND ai_key = ?').get(userId, aiKey);
+}
+export function subscribeToCategory(userId, category) {
+  const createdAt = new Date().toISOString();
+  db.prepare('INSERT OR IGNORE INTO category_subscriptions (user_id, category, created_at) VALUES (?,?,?)').run(userId, category, createdAt);
+  return db.prepare('SELECT category, created_at FROM category_subscriptions WHERE user_id = ? AND category = ?').get(userId, category);
+}
+export function unsubscribeFromCategory(userId, category) {
+  return db.prepare('DELETE FROM category_subscriptions WHERE user_id = ? AND category = ?').run(userId, category).changes > 0;
+}
+export function listCategorySubscriptions(userId) {
+  return db.prepare('SELECT category, created_at FROM category_subscriptions WHERE user_id = ? ORDER BY category').all(userId);
+}
+export function listSubscriberEmails(category) {
+  return db.prepare(`
+    SELECT users.email FROM users
+    INNER JOIN category_subscriptions ON category_subscriptions.user_id = users.id
+    WHERE category_subscriptions.category = ?
+  `).all(category).map((row) => row.email);
 }
 export function addUserComparison(userId, title, aiKeys) {
   const created_at = new Date().toISOString();
@@ -452,29 +545,62 @@ export function listAdminUsers() {
 }
 export function listAdminAiTools() {
   return db.prepare(`
-    SELECT id, name, slug, category, description, website, pricing, model,
+    SELECT id, name, slug, vendor, category, description, website, pricing, model,
            context_window AS contextWindow, speed, coding_score AS codingScore,
            reasoning_score AS reasoningScore, image_support AS imageSupport,
            audio_support AS audioSupport, api_available AS apiAvailable,
-           privacy, logo, created_at, updated_at
+           privacy, logo, how, why, best_for AS bestFor, integrations, open_source AS openSource,
+           retired, created_at, updated_at
     FROM ai_tools ORDER BY name ASC
-  `).all();
+  `).all().map(parseTool);
+}
+function parseTool(tool) {
+  return { ...tool, bestFor: JSON.parse(tool.bestFor || '[]'), integrations: JSON.parse(tool.integrations || '[]') };
+}
+export function listCatalog({ query = '', pricing = '', integration = '', ownership = '' } = {}) {
+  const terms = `%${query.trim()}%`;
+  const rows = db.prepare(`
+    SELECT id, name, slug, vendor, category, description, website, pricing, model, context_window AS contextWindow,
+      speed, coding_score AS codingScore, reasoning_score AS reasoningScore, image_support AS imageSupport,
+      audio_support AS audioSupport, api_available AS apiAvailable, privacy, logo, how, why,
+      best_for AS bestFor, integrations, open_source AS openSource, retired, created_at, updated_at
+    FROM ai_tools
+    WHERE retired = 0
+      AND (? = '' OR name LIKE ? OR vendor LIKE ? OR description LIKE ? OR best_for LIKE ?)
+      AND (? = '' OR pricing = ?)
+      AND (? = '' OR integrations LIKE ?)
+      AND (? = '' OR (? = 'open-source' AND open_source = 1) OR (? = 'proprietary' AND open_source = 0))
+    ORDER BY name ASC
+  `).all(query.trim(), terms, terms, terms, terms, pricing, pricing, integration, `%${integration}%`, ownership, ownership, ownership);
+  return rows.map(parseTool);
+}
+export function getCatalogTool(slug) {
+  const row = db.prepare('SELECT * FROM ai_tools WHERE slug = ? AND retired = 0').get(slug);
+  return row ? parseTool({ ...row, contextWindow: row.context_window, codingScore: row.coding_score, reasoningScore: row.reasoning_score, imageSupport: row.image_support, audioSupport: row.audio_support, apiAvailable: row.api_available, bestFor: row.best_for, openSource: row.open_source }) : null;
 }
 export function addAiTool(tool) {
   const now = new Date().toISOString();
   const info = db.prepare(`
-    INSERT INTO ai_tools (name, slug, category, description, website, pricing, model,
+    INSERT INTO ai_tools (name, slug, vendor, category, description, website, pricing, model,
       context_window, speed, coding_score, reasoning_score, image_support,
-      audio_support, api_available, privacy, logo, created_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-  `).run(tool.name, tool.slug, tool.category, tool.description, tool.website, tool.pricing, tool.model,
+      audio_support, api_available, privacy, logo, how, why, best_for, integrations, open_source, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `).run(tool.name, tool.slug, tool.vendor || '', tool.category, tool.description, tool.website, tool.pricing, tool.model,
     tool.contextWindow, tool.speed, tool.codingScore, tool.reasoningScore, tool.imageSupport ? 1 : 0,
-    tool.audioSupport ? 1 : 0, tool.apiAvailable ? 1 : 0, tool.privacy, tool.logo, now, now);
+    tool.audioSupport ? 1 : 0, tool.apiAvailable ? 1 : 0, tool.privacy, tool.logo, tool.how || '', tool.why || '', JSON.stringify(tool.bestFor || []), JSON.stringify(tool.integrations || []), tool.openSource ? 1 : 0, now, now);
   return db.prepare('SELECT * FROM ai_tools WHERE id = ?').get(info.lastInsertRowid);
 }
 export function deleteAiTool(id) {
-  return db.prepare('DELETE FROM ai_tools WHERE id = ?').run(id).changes > 0;
+  return db.prepare('UPDATE ai_tools SET retired = 1, updated_at = ? WHERE id = ?').run(new Date().toISOString(), id).changes > 0;
 }
+export function updateAiTool(id, tool) {
+  const fields = ['name', 'vendor', 'category', 'description', 'website', 'pricing', 'model', 'how', 'why', 'best_for', 'integrations', 'open_source', 'retired', 'updated_at'];
+  const values = [tool.name, tool.vendor || '', tool.category, tool.description, tool.website, tool.pricing || '', tool.model || '', tool.how || '', tool.why || '', JSON.stringify(tool.bestFor || []), JSON.stringify(tool.integrations || []), tool.openSource ? 1 : 0, tool.retired ? 1 : 0, new Date().toISOString(), id];
+  return db.prepare(`UPDATE ai_tools SET ${fields.map((field) => `${field} = ?`).join(', ')} WHERE id = ?`).run(...values).changes > 0;
+}
+export function addToolSuggestion(suggestion) { const now = new Date().toISOString(); const info = db.prepare('INSERT INTO tool_suggestions (name, website, description, submitter_email, created_at, updated_at) VALUES (?,?,?,?,?,?)').run(suggestion.name, suggestion.website, suggestion.description, suggestion.submitterEmail || '', now, now); return db.prepare('SELECT * FROM tool_suggestions WHERE id = ?').get(info.lastInsertRowid); }
+export function listToolSuggestions() { return db.prepare('SELECT * FROM tool_suggestions ORDER BY id DESC').all(); }
+export function updateToolSuggestion(id, status, adminNote = '') { return db.prepare('UPDATE tool_suggestions SET status = ?, admin_note = ?, updated_at = ? WHERE id = ?').run(status, adminNote, new Date().toISOString(), id).changes > 0; }
 export function updateQuote(id, { status, reply }) {
   const fields = [];
   const values = [];
@@ -545,6 +671,24 @@ export function getDashboardData() {
     GROUP BY week
     ORDER BY week ASC
   `).all();
+  const eventTrend = (eventName) => db.prepare(`
+    SELECT strftime('%Y-%W', created_at) AS week, COUNT(*) AS count
+    FROM analytics_events
+    WHERE event_name = ? AND created_at >= datetime('now', '-56 days')
+    GROUP BY week ORDER BY week ASC
+  `).all(eventName);
+  const funnelTotals = Object.fromEntries(['modal_open', 'tool_view', 'choose_ai'].map((eventName) => [
+    eventName, db.prepare('SELECT COUNT(*) AS count FROM analytics_events WHERE event_name = ?').get(eventName).count
+  ]));
+  const categoryFunnel = db.prepare(`
+    SELECT category,
+      SUM(event_name = 'modal_open') AS modalOpens,
+      SUM(event_name = 'tool_view') AS toolViews,
+      SUM(event_name = 'choose_ai') AS choices
+    FROM analytics_events
+    WHERE category != ''
+    GROUP BY category ORDER BY choices DESC, modalOpens DESC, category ASC
+  `).all();
 
   return {
     reviews: {
@@ -571,13 +715,26 @@ export function getDashboardData() {
       management: listAdminUsers()
     },
     aiTools: listAdminAiTools(),
+    toolSuggestions: listToolSuggestions(),
     hero: {
       likes: getLikeCount()
     },
     trends: {
       reviews: weeklyTrend('reviews'),
       projects: weeklyTrend('community_projects'),
-      quotes: weeklyTrend('quote_requests')
+      quotes: weeklyTrend('quote_requests'),
+      modalOpens: eventTrend('modal_open'),
+      toolViews: eventTrend('tool_view'),
+      choices: eventTrend('choose_ai')
+    },
+    funnel: {
+      totals: funnelTotals,
+      byCategory: categoryFunnel
     }
   };
+}
+export function recordAnalyticsEvent(eventName, aiKey = '', category = '') {
+  const createdAt = new Date().toISOString();
+  const info = db.prepare('INSERT INTO analytics_events (event_name, ai_key, category, created_at) VALUES (?,?,?,?)').run(eventName, aiKey, category, createdAt);
+  return { id: info.lastInsertRowid, eventName, aiKey, category, createdAt };
 }

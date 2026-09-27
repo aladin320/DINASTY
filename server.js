@@ -14,8 +14,11 @@ import {
   listAdminReviews, deleteReview, moderateReview,
   listAdminProjects, updateProjectModeration, deleteProject,
   listAdminQuotes, updateQuote, deleteQuote,
-  listAdminAiTools, addAiTool, deleteAiTool,
-  verifyUserPassword, getUserDashboardData, saveTool, removeSavedTool, addUserComparison
+  listAdminAiTools, addAiTool, updateAiTool, deleteAiTool, listCatalog, getCatalogTool,
+  addToolSuggestion, listToolSuggestions, updateToolSuggestion,
+  verifyUserPassword, getUserDashboardData, saveTool, removeSavedTool, addUserComparison,
+  recordToolView, subscribeToCategory, unsubscribeFromCategory, listCategorySubscriptions, listSubscriberEmails,
+  recordAnalyticsEvent
 } from './db.js';
 
 dotenv.config();
@@ -74,7 +77,7 @@ const agentChatLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: getRateLimitMessage() }
 });
-const quoteStatuses = ['new', 'in-progress', 'replied', 'closed'];
+const quoteStatuses = ['new', 'contacted', 'closed'];
 
 const quoteMailer = process.env.SMTP_HOST
   ? nodemailer.createTransport({
@@ -84,6 +87,36 @@ const quoteMailer = process.env.SMTP_HOST
     auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } : undefined
   })
   : null;
+
+async function dispatchQuoteWebhook(payload) {
+  const webhookUrl = process.env.QUOTE_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) return;
+
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        text: `New DINASTY quote request: ${payload.company} (${payload.service}) — ${payload.name} <${payload.email}>`
+      })
+    });
+  } catch (error) {
+    console.error('Quote webhook failed:', error);
+  }
+}
+
+async function notifyCategorySubscribers(category, tool) {
+  if (!quoteMailer || !process.env.TOOL_NOTIFICATION_EMAIL) return;
+  const recipients = listSubscriberEmails(category);
+  if (!recipients.length) return;
+  await quoteMailer.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: process.env.TOOL_NOTIFICATION_EMAIL,
+    bcc: recipients,
+    subject: `New ${category} tool on DINASTY: ${tool.name}`,
+    text: `${tool.name} is now available in the DINASTY catalog. Explore it at ${tool.website}`
+  });
+}
 
 app.use(generalLimiter);
 app.use(express.json({ limit: '1mb' }));
@@ -116,8 +149,41 @@ app.get('/Dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'Das
 app.get('/dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'Dashboard.html')));
 app.get('/UserDashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'UserDashboard.html')));
 app.get('/user-dashboard.html', (_req, res) => res.sendFile(path.join(__dirname, 'UserDashboard.html')));
+app.get('/compare', (_req, res) => res.sendFile(path.join(__dirname, 'compare.html')));
+app.get('/compare.html', (_req, res) => res.sendFile(path.join(__dirname, 'compare.html')));
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'dinasty', timestamp: new Date().toISOString() });
+});
+
+app.post('/api/analytics/events', (req, res) => {
+  const allowedEvents = ['modal_open', 'tool_view', 'choose_ai'];
+  const eventName = cleanStr(req.body?.eventName, MAX_SHORT);
+  const aiKey = cleanStr(req.body?.aiKey, MAX_SHORT) || '';
+  const category = cleanStr(req.body?.category, MAX_SHORT) || '';
+  if (!eventName || !allowedEvents.includes(eventName)) return res.status(400).json({ error: 'invalid analytics event' });
+  res.status(201).json(recordAnalyticsEvent(eventName, aiKey, category));
+});
+
+app.get('/api/tools', (req, res) => {
+  res.json(listCatalog({
+    query: cleanStr(req.query.q, MAX_SHORT) || '',
+    pricing: cleanStr(req.query.pricing, MAX_SHORT) || '',
+    integration: cleanStr(req.query.integration, MAX_SHORT) || '',
+    ownership: cleanStr(req.query.ownership, MAX_SHORT) || ''
+  }));
+});
+app.get('/api/tools/:slug', (req, res) => {
+  const tool = getCatalogTool(req.params.slug);
+  if (!tool) return res.status(404).json({ error: 'AI tool not found' });
+  res.json(tool);
+});
+app.post('/api/tools/suggestions', (req, res) => {
+  const name = cleanStr(req.body?.name, MAX_SHORT);
+  const website = cleanStr(req.body?.website, 500);
+  const description = cleanStr(req.body?.description, MAX_TEXT);
+  const submitterEmail = cleanEmail(req.body?.submitterEmail) || '';
+  if (!name || !website || !description) return res.status(400).json({ error: 'name, website and description are required' });
+  res.status(201).json({ success: true, id: addToolSuggestion({ name, website, description, submitterEmail }).id });
 });
 
 // ---------- Small validation helpers ----------
@@ -158,7 +224,9 @@ function clearAuthCookie(res) {
 }
 
 app.use((error, _req, res, _next) => {
-  void _next;
+  if (typeof _next === 'function') {
+    void _next;
+  }
   console.error('Unhandled server error:', error);
   res.status(500).json({ error: 'internal server error' });
 });
@@ -324,6 +392,35 @@ app.get('/api/user/dashboard', (req, res) => {
   res.json(getUserDashboardData(session.user));
 });
 
+app.post('/api/user/tool-views', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  const aiKey = cleanStr(req.body?.aiKey, MAX_SHORT);
+  if (!aiKey) return res.status(400).json({ error: 'aiKey is required' });
+  res.status(201).json(recordToolView(session.user.id, aiKey));
+});
+
+app.get('/api/user/subscriptions', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  res.json(listCategorySubscriptions(session.user.id));
+});
+
+app.post('/api/user/subscriptions', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  const category = cleanStr(req.body?.category, MAX_SHORT);
+  if (!category) return res.status(400).json({ error: 'category is required' });
+  res.status(201).json(subscribeToCategory(session.user.id, category));
+});
+
+app.delete('/api/user/subscriptions/:category', (req, res) => {
+  const session = requireUserSession(req, res);
+  if (!session) return;
+  if (!unsubscribeFromCategory(session.user.id, req.params.category)) return res.status(404).json({ error: 'subscription not found' });
+  res.status(204).end();
+});
+
 app.post('/api/user/saved-tools', (req, res) => {
   const session = requireUserSession(req, res);
   if (!session) return;
@@ -477,6 +574,8 @@ app.post('/api/quote', (req, res) => {
   }
 
   const saved = addQuoteRequest({ name, company, email, phone, service, project });
+  const payload = { id: saved.id, name, company, email, phone, service, project };
+
   if (quoteMailer && process.env.QUOTE_NOTIFICATION_EMAIL) {
     quoteMailer.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
@@ -489,6 +588,8 @@ app.post('/api/quote', (req, res) => {
       ].join('\n')
     }).catch((error) => console.error('Quote notification email failed:', error));
   }
+
+  dispatchQuoteWebhook(payload).catch((error) => console.error('Quote webhook failed:', error));
   res.status(201).json({ success: true, id: saved.id });
 });
 
@@ -571,20 +672,40 @@ app.post('/api/admin/ai-tools', (req, res) => {
     return res.status(400).json({ error: 'name, slug, category, description and website are required' });
   }
   try {
-    res.status(201).json(addAiTool({
-      name: cleanStr(body.name, MAX_SHORT), slug: cleanStr(body.slug, MAX_SHORT),
+    const tool = addAiTool({
+      name: cleanStr(body.name, MAX_SHORT), slug: cleanStr(body.slug, MAX_SHORT), vendor: cleanStr(body.vendor, MAX_SHORT),
       category: cleanStr(body.category, MAX_SHORT), description: cleanStr(body.description, MAX_TEXT),
       website: cleanStr(body.website, 500), pricing: cleanStr(body.pricing, MAX_SHORT) || '',
       model: cleanStr(body.model, MAX_SHORT) || '', contextWindow: Number(body.contextWindow) || null,
       speed: cleanStr(body.speed, MAX_SHORT) || '', codingScore: Number(body.codingScore) || null,
       reasoningScore: Number(body.reasoningScore) || null, imageSupport: Boolean(body.imageSupport),
       audioSupport: Boolean(body.audioSupport), apiAvailable: Boolean(body.apiAvailable),
-      privacy: cleanStr(body.privacy, MAX_TEXT) || '', logo: cleanStr(body.logo, 500) || ''
-    }));
+      privacy: cleanStr(body.privacy, MAX_TEXT) || '', logo: cleanStr(body.logo, 500) || '',
+      how: cleanStr(body.how, MAX_TEXT) || '', why: cleanStr(body.why, MAX_TEXT) || '',
+      bestFor: Array.isArray(body.bestFor) ? body.bestFor.filter((value) => typeof value === 'string').slice(0, 20) : [],
+      integrations: Array.isArray(body.integrations) ? body.integrations.filter((value) => typeof value === 'string').slice(0, 20) : [],
+      openSource: Boolean(body.openSource)
+    });
+    notifyCategorySubscribers(tool.category, tool).catch((error) => console.error('Tool notification failed:', error));
+    res.status(201).json(tool);
   } catch (error) {
     if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(409).json({ error: 'slug already exists' });
     throw error;
   }
+});
+app.patch('/api/admin/ai-tools/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  const body = req.body || {};
+  if (!cleanStr(body.name, MAX_SHORT) || !cleanStr(body.category, MAX_SHORT) || !cleanStr(body.description, MAX_TEXT) || !cleanStr(body.website, 500)) {
+    return res.status(400).json({ error: 'name, category, description and website are required' });
+  }
+  if (!updateAiTool(id, {
+    ...body, name: cleanStr(body.name, MAX_SHORT), vendor: cleanStr(body.vendor, MAX_SHORT), category: cleanStr(body.category, MAX_SHORT),
+    description: cleanStr(body.description, MAX_TEXT), website: cleanStr(body.website, 500), retired: Boolean(body.retired)
+  })) return res.status(404).json({ error: 'AI tool not found' });
+  res.json({ success: true });
 });
 app.delete('/api/admin/ai-tools/:id', (req, res) => {
   if (!requireAdminAccess(req, res)) return;
@@ -592,6 +713,28 @@ app.delete('/api/admin/ai-tools/:id', (req, res) => {
   if (!id) return;
   if (!deleteAiTool(id)) return res.status(404).json({ error: 'AI tool not found' });
   res.status(204).end();
+});
+app.get('/api/admin/tool-suggestions', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  res.json(listToolSuggestions());
+});
+app.patch('/api/admin/tool-suggestions/:id', (req, res) => {
+  if (!requireAdminAccess(req, res)) return;
+  const id = adminId(req, res);
+  if (!id) return;
+  if (!['pending', 'approved', 'rejected'].includes(req.body?.status)) return res.status(400).json({ error: 'invalid suggestion status' });
+  const suggestion = listToolSuggestions().find((item) => item.id === id);
+  if (!suggestion) return res.status(404).json({ error: 'suggestion not found' });
+  if (req.body.status === 'approved') {
+    const slug = suggestion.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    try {
+      addAiTool({ name: suggestion.name, slug, vendor: suggestion.name, category: 'productivity', description: suggestion.description, website: suggestion.website, pricing: '', model: '', how: suggestion.description, why: 'Community-suggested tool awaiting richer catalog metadata.', bestFor: [], integrations: [], openSource: false, privacy: '', logo: '' });
+    } catch (error) {
+      if (error.code !== 'SQLITE_CONSTRAINT_UNIQUE') throw error;
+    }
+  }
+  if (!updateToolSuggestion(id, req.body.status, cleanStr(req.body.adminNote, MAX_TEXT) || '')) return res.status(404).json({ error: 'suggestion not found' });
+  res.json({ success: true });
 });
 
 app.get('/api/admin/quotes', (req, res) => {

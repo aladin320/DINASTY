@@ -111,6 +111,15 @@
   .dash-trend-label{ color:var(--ink-faint); font:9px var(--font-mono); overflow:hidden; text-overflow:ellipsis; max-width:100%; }
   .dash-trend-legend{ display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; color:var(--ink-faint); font-size:11px; }
   .dash-trend-legend span::before{ content:''; display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--trend-color); margin-right:5px; }
+  .dash-funnel-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0 18px; }
+  .dash-funnel-stat{ display:flex; flex-direction:column; gap:5px; padding:12px; background:var(--panel-2); border:1px solid var(--line); border-radius:7px; }
+  .dash-funnel-stat span{ color:var(--ink-faint); font-size:11px; }
+  .dash-funnel-stat b{ font:700 22px var(--font-display); color:var(--ink); }
+  .dash-funnel-list{ display:flex; flex-direction:column; gap:8px; }
+  .dash-funnel-row{ display:grid; grid-template-columns:110px 1fr 60px; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:12px; }
+  .dash-funnel-row span:first-child{ color:var(--ink); font-weight:600; }
+  .dash-funnel-row span:nth-child(2){ color:var(--ink-faint); }
+  .dash-funnel-row b{ color:var(--sage); text-align:right; font-family:var(--font-mono); }
   .dash-manage-item{ border-bottom:1px solid var(--line); padding-bottom:12px; }
   .dash-manage-item:last-child{ border-bottom:none; padding-bottom:0; }
   .dash-manage-title{ color:var(--ink); font-size:13px; font-weight:600; margin:0 0 3px; }
@@ -186,6 +195,13 @@
       <div class="dash-trend-legend"><span style="--trend-color:#8FBFA3">Reviews</span><span style="--trend-color:#7F77DD">Projects</span><span style="--trend-color:#E17B6B">Quotes</span></div>
     </div>
 
+    <div class="dash-panel dash-funnel-panel" style="--dash-accent:#E3A76B;">
+      <h3>Picker conversion funnel</h3>
+      <p class="dash-panel-sub">From opening the picker to choosing an AI, with category performance</p>
+      <div class="dash-funnel-stats" id="dashFunnelStats"></div>
+      <div class="dash-funnel-list" id="dashFunnelCategories"></div>
+    </div>
+
     <div class="dash-grid">
       <div class="dash-panel" style="--dash-accent:#8FBFA3;">
         <h3>Reviews by AI</h3>
@@ -246,12 +262,18 @@
       <section class="dash-panel" style="--dash-accent:#5CC8E0;">
         <h3>AI tools</h3>
         <p class="dash-panel-sub">Tools represented in current activity</p>
+        <button class="dash-refresh" id="dashAddToolBtn" type="button">Add tool</button>
         <div class="dash-manage-list" id="dashToolManagement"></div>
       </section>
       <section class="dash-panel" style="--dash-accent:#E3C36B;">
         <h3>Analytics</h3>
         <p class="dash-panel-sub">Live totals from the database</p>
         <div class="dash-manage-list" id="dashAnalyticsManagement"></div>
+      </section>
+      <section class="dash-panel" style="--dash-accent:#5CC8E0;">
+        <h3>Tool suggestions</h3>
+        <p class="dash-panel-sub">Review community-submitted catalog additions</p>
+        <div class="dash-manage-list" id="dashSuggestionManagement"></div>
       </section>
     </div>
   </div>
@@ -394,6 +416,27 @@ function renderTrendChart(trends) {
   });
 }
 
+function renderFunnel(funnel) {
+  const stats = document.getElementById('dashFunnelStats');
+  const categories = document.getElementById('dashFunnelCategories');
+  const labels = [['modal_open', 'Modal opens'], ['tool_view', 'Tool views'], ['choose_ai', 'Choose clicks']];
+  stats.innerHTML = labels.map(([key, label]) => `<div class="dash-funnel-stat"><span>${label}</span><b>${funnel.totals[key] || 0}</b></div>`).join('');
+  categories.innerHTML = '';
+  if (!funnel.byCategory.length) { categories.innerHTML = '<p class="dash-empty">No picker activity yet.</p>'; return; }
+  funnel.byCategory.forEach((row) => {
+    const views = Number(row.toolViews) || 0;
+    const choices = Number(row.choices) || 0;
+    const conversion = views ? `${((choices / views) * 100).toFixed(1)}%` : '0%';
+    const item = document.createElement('div');
+    item.className = 'dash-funnel-row';
+    item.innerHTML = '<span></span><span></span><b></b>';
+    item.querySelector('span:first-child').textContent = formatAiName(row.category);
+    item.querySelector('span:nth-child(2)').textContent = `${row.modalOpens || 0} opens · ${views} views · ${choices} choices`;
+    item.querySelector('b').textContent = conversion;
+    categories.appendChild(item);
+  });
+}
+
 async function refreshManagement() {
   const data = await fetchDashboard(currentAdminKey);
   currentDashboardData = data;
@@ -426,8 +469,8 @@ function renderManagement(data) {
       `${quote.name} · ${quote.project} · ${quote.status}`,
       [
         actionButton('View details', () => alert(`${quote.name}\n${quote.email}\n${quote.phone}\n${quote.project}`)),
-        actionButton('Change status', async () => { const status = prompt('Status: new, in-progress, replied, or closed', quote.status); if (status) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); await refreshManagement(); } }),
-        actionButton('Reply', async () => { const reply = prompt('Reply to this quote request', quote.reply || ''); if (reply !== null) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'PATCH', body: JSON.stringify({ reply, status: 'replied' }) }); await refreshManagement(); } }),
+        actionButton('Change status', async () => { const status = prompt('Status: new, contacted, or closed', quote.status); if (status) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); await refreshManagement(); } }),
+        actionButton('Reply', async () => { const reply = prompt('Reply to this quote request', quote.reply || ''); if (reply !== null) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'PATCH', body: JSON.stringify({ reply, status: 'contacted' }) }); await refreshManagement(); } }),
         actionButton('Delete', async () => { if (confirm('Delete this quote request?')) { await adminRequest(`/api/admin/quotes/${quote.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)
       ]
       ));
@@ -441,9 +484,18 @@ function renderManagement(data) {
   data.aiTools.forEach((tool) => toolEl.appendChild(managementItem(
     tool.name,
     `${tool.category} · ${tool.pricing || 'pricing not set'} · ${tool.apiAvailable ? 'API available' : 'no API listed'}`,
-    [actionButton('View', () => alert(`${tool.description}\n${tool.website}`)), actionButton('Delete', async () => { if (confirm('Delete this AI tool?')) { await adminRequest(`/api/admin/ai-tools/${tool.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)]
+    [actionButton('View', () => alert(`${tool.description}\n${tool.website}`)), actionButton('Edit', async () => { const description = prompt('Tool description', tool.description); if (description) { await adminRequest(`/api/admin/ai-tools/${tool.id}`, { method: 'PATCH', body: JSON.stringify({ ...tool, description }) }); await refreshManagement(); } }), actionButton('Retire', async () => { if (confirm('Retire this AI tool from the public catalog?')) { await adminRequest(`/api/admin/ai-tools/${tool.id}`, { method: 'DELETE' }); await refreshManagement(); } }, true)]
   )));
   if (!toolEl.children.length) toolEl.innerHTML = '<p class="dash-empty">No tool activity yet.</p>';
+
+  const suggestionEl = document.getElementById('dashSuggestionManagement');
+  suggestionEl.innerHTML = '';
+  (data.toolSuggestions || []).forEach((suggestion) => suggestionEl.appendChild(managementItem(
+    suggestion.name,
+    `${suggestion.website} · ${suggestion.status}`,
+    [actionButton('View', () => alert(suggestion.description)), actionButton('Approve', async () => { await adminRequest(`/api/admin/tool-suggestions/${suggestion.id}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) }); await refreshManagement(); }), actionButton('Reject', async () => { await adminRequest(`/api/admin/tool-suggestions/${suggestion.id}`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected' }) }); await refreshManagement(); }, true)]
+  )));
+  if (!suggestionEl.children.length) suggestionEl.innerHTML = '<p class="dash-empty">No suggestions yet.</p>';
 
   const analyticsEl = document.getElementById('dashAnalyticsManagement');
   analyticsEl.innerHTML = '';
@@ -612,6 +664,7 @@ async function loadDashboard(key) {
     renderBarChart(data.reviews.perAi);
     renderDonut(data.reviews.distribution);
     renderTrendChart(data.trends);
+    renderFunnel(data.funnel);
     renderProjects(data.projects.recent);
     renderQuotes(data.quotes.recent, data.quotes.byService);
     renderManagement(data);
@@ -667,6 +720,17 @@ document.getElementById('dashExportBtn').addEventListener('click', async () => {
   link.download = 'dinasty-quote-requests.csv';
   link.click();
   URL.revokeObjectURL(url);
+});
+document.getElementById('dashAddToolBtn').addEventListener('click', async () => {
+  const name = prompt('Tool name');
+  const slug = prompt('Tool slug, e.g. example-ai');
+  const website = prompt('Website URL');
+  const description = prompt('Description');
+  if (!name || !slug || !website || !description) return;
+  try {
+    await adminRequest('/api/admin/ai-tools', { method: 'POST', body: JSON.stringify({ name, slug, website, description, category: 'productivity', vendor: name }) });
+    await refreshManagement();
+  } catch (error) { alert(error.message); }
 });
 document.getElementById('dashLogoutBtn').addEventListener('click', () => {
   localStorage.removeItem(KEY_STORAGE);

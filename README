@@ -21,9 +21,10 @@ The database contains these application tables: `reviews`,
 the server starts. The `ai_tools` table stores the catalog metadata used by
 the admin AI tools section.
 
-The AI catalog itself (the 46 tools, their descriptions, categories, etc.)
-stays as static config in `public/script.js` — it's app data the site
-ships with, not something users generate, so it doesn't need a table.
+The 46-tool catalog is seeded into the `ai_tools` table on startup and served
+through `/api/tools`. Admins can add, edit, and retire tools from the
+dashboard without a code deploy. Public search covers descriptions and
+best-for tags, with pricing, integration, and ownership filters.
 
 ## Setup
 
@@ -40,6 +41,8 @@ Open `.env` and configure:
   chat button (it runs in a demo mode without one)
 - optionally configure the SMTP variables in `.env.example` to email the team
   when a quote request arrives; requests remain saved if delivery fails
+- set `TOOL_NOTIFICATION_EMAIL` with SMTP enabled to notify users who follow a
+  category when a new catalog tool is published
 - authenticate with `POST /api/admin/login` using `{key: ADMIN_KEY}`, then
   send the real key as `x-admin-key: ADMIN_KEY` when calling
   `GET /api/admin/quotes`, `GET /api/admin/quotes.csv`, or `GET /api/dashboard`
@@ -115,7 +118,14 @@ than committing them.
 | DELETE | `/api/admin/quotes/:id` | Delete a quote request |
 | GET | `/api/admin/ai-tools` | List AI tools |
 | POST | `/api/admin/ai-tools` | Add an AI tool with catalog metadata |
+| PATCH | `/api/admin/ai-tools/:id` | Edit or restore an AI tool |
 | DELETE | `/api/admin/ai-tools/:id` | Delete an AI tool |
+| GET | `/api/tools` | Search and filter active catalog tools |
+| GET | `/api/tools/:slug` | Get one active catalog tool |
+| POST | `/api/tools/suggestions` | Suggest a tool for moderation |
+| GET | `/api/admin/tool-suggestions` | List submitted tool suggestions |
+| PATCH | `/api/admin/tool-suggestions/:id` | Approve or reject a suggestion |
+| GET | `/compare?tools=claude,gpt` | Side-by-side comparison page |
 | GET | `/api/dashboard` | Dashboard aggregates (needs `x-admin-key`) |
 | POST | `/api/agent-chat` | AI Agent chat backend |
 

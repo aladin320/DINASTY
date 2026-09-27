@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%238FBFA3'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' fill='%230F1513' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+<title>DINASTY - Compare AI tools</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.compare-page{max-width:1180px;margin:0 auto;padding:56px 20px 80px}.compare-kicker{font:12px var(--font-mono);color:var(--sage);letter-spacing:.12em;text-transform:uppercase}.compare-page h1{font:700 clamp(32px,6vw,58px) var(--font-display);margin:10px 0}.compare-page>p{color:var(--ink-dim);max-width:60ch;line-height:1.6}.compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:34px}.compare-card{background:var(--bg-raised);border:1px solid var(--line);border-radius:10px;padding:22px}.compare-card h2{font:600 21px var(--font-display);margin:0 0 5px}.compare-vendor{color:var(--sage);font-size:12px}.compare-card dl{display:grid;grid-template-columns:100px 1fr;gap:10px;margin:22px 0 0;font-size:13px}.compare-card dt{color:var(--ink-faint)}.compare-card dd{margin:0;color:var(--ink-dim)}.compare-empty{margin-top:32px;color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<nav class="navbar"><div class="logo"><div class="logo-mark">D</div><div class="logo-title">DIN<span>A</span>STY</div></div><div class="nav-actions"><a href="/" class="btn-ghost">Back to catalog</a></div></nav>
+<main class="compare-page"><p class="compare-kicker">DINASTY / Comparison</p><h1>Compare AI tools side by side.</h1><p>Review the capabilities, pricing signals, integrations, and ownership model for the tools you are evaluating.</p><div class="compare-grid" id="compareGrid"></div></main>
+<script>
+const params = new URLSearchParams(location.search);
+const slugs = [...new Set((params.get('tools') || '').split(',').map(value => value.trim()).filter(Boolean))].slice(0, 3);
+const grid = document.getElementById('compareGrid');
+function value(value, fallback = 'Not listed') { return value || fallback; }
+async function load() {
+  if (slugs.length < 2) { grid.innerHTML = '<p class="compare-empty">Choose two or three tools from the catalog to compare them.</p>'; return; }
+  const tools = await Promise.all(slugs.map(slug => fetch(`/api/tools/${encodeURIComponent(slug)}`).then(response => response.ok ? response.json() : null)));
+  grid.innerHTML = tools.filter(Boolean).map(tool => `<article class="compare-card"><h2>${tool.name}</h2><span class="compare-vendor">${tool.vendor}</span><dl><dt>Category</dt><dd>${value(tool.category)}</dd><dt>Pricing</dt><dd>${value(tool.pricing)}</dd><dt>Integrates with</dt><dd>${value(tool.integrations?.join(', '))}</dd><dt>Ownership</dt><dd>${tool.openSource ? 'Open source' : 'Proprietary'}</dd><dt>Best for</dt><dd>${value(tool.bestFor?.join(', '))}</dd><dt>Why it fits</dt><dd>${value(tool.why)}</dd></dl></article>`).join('');
+}
+load().catch(() => { grid.innerHTML = '<p class="compare-empty">The comparison could not be loaded.</p>'; });
+</script>
+</body>
+</html>

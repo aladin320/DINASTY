@@ -5,9 +5,9 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "test": "node --test",
+    "start": "npx -y -p node@20 node server.js",
+    "dev": "npx -y -p node@20 node --watch server.js",
+    "test": "npx -y -p node@20 node --test",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

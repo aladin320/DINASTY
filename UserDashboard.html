@@ -57,6 +57,8 @@
       <section class="user-panel"><h2>My AI tools</h2><p class="user-panel-sub">Tools you have reviewed or saved</p><div class="user-list" id="userTools"></div></section>
       <section class="user-panel"><h2>My comparisons</h2><p class="user-panel-sub">Saved AI tool comparisons</p><div class="user-list" id="userComparisons"></div></section>
       <section class="user-panel"><h2>Saved tools</h2><p class="user-panel-sub">Your personal tool shortlist</p><div class="user-list" id="userSavedTools"></div></section>
+      <section class="user-panel"><h2>Recently viewed</h2><p class="user-panel-sub">Tools you have opened recently</p><div class="user-list" id="userViewedTools"></div></section>
+      <section class="user-panel"><h2>Category alerts</h2><p class="user-panel-sub">Categories you follow for new tools</p><div class="user-list" id="userSubscriptions"></div></section>
       <section class="user-panel"><h2>My reviews</h2><p class="user-panel-sub">Performance reviews you have posted</p><div class="user-list" id="userReviews"></div></section>
       <section class="user-panel"><h2>My projects</h2><p class="user-panel-sub">Projects you have shared with the community</p><div class="user-list" id="userProjects"></div></section>
       <section class="user-panel"><h2>My quote requests</h2><p class="user-panel-sub">Requests submitted to the DINASTY team</p><div class="user-list" id="userQuotes"></div></section>
@@ -85,6 +87,8 @@ async function loadUserDashboard(){
   const toolNames=[...new Set([...data.reviews.map(review=>review.aiKey),...data.savedTools.map(tool=>tool.aiKey)])];
   renderList('userTools',toolNames,'No AI tools yet.',tool=>item(formatAiName(tool),'In your workspace'));
   renderList('userSavedTools',data.savedTools,'No saved tools yet.',tool=>item(formatAiName(tool.aiKey),`Saved ${timeAgo(tool.created_at)}`));
+  renderList('userViewedTools',data.viewedTools,'No viewed tools yet.',tool=>item(formatAiName(tool.aiKey),`Viewed ${timeAgo(tool.viewed_at)}`));
+  renderList('userSubscriptions',data.subscriptions,'No category alerts yet.',subscription=>item(formatAiName(subscription.category),`Following since ${timeAgo(subscription.created_at)}`));
   renderList('userComparisons',data.comparisons,'No comparisons yet.',comparison=>item(comparison.title,comparison.aiKeys.map(formatAiName).join(' vs ')));
   renderList('userProjects',data.projects,'No projects yet.',project=>item(project.title,`${formatAiName(project.aiKey)} - ${project.commentCount} comments${project.featured?' - featured':''}`));
   renderList('userQuotes',data.quotes,'No quote requests yet.',quote=>item(quote.project,`${quote.company} - ${quote.status}`));

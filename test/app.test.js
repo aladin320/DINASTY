@@ -21,6 +21,8 @@ test('database initializes required tables', () => {
   assert.ok(names.has('quote_requests'));
   assert.ok(names.has('users'));
   assert.ok(names.has('ai_tools'));
+  const analyticsTable = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'analytics_events'").get();
+  assert.equal(analyticsTable.name, 'analytics_events');
 });
 
 test('quote database functions persist and update request status', () => {
@@ -34,10 +36,33 @@ test('quote database functions persist and update request status', () => {
   });
 
   assert.ok(listQuoteRequests().some((quote) => quote.id === saved.id));
-  assert.equal(updateQuote(saved.id, { status: 'closed', reply: 'Test reply' }), true);
+  assert.equal(updateQuote(saved.id, { status: 'contacted', reply: 'Test reply' }), true);
   const updated = listQuoteRequests().find((quote) => quote.id === saved.id);
-  assert.equal(updated.status, 'closed');
+  assert.equal(updated.status, 'contacted');
   assert.equal(updated.reply, 'Test reply');
+  assert.equal(deleteQuote(saved.id), true);
+});
+
+test('dashboard quote status updates accept the sales lifecycle', async (t) => {
+  process.env.ADMIN_KEY = 'test-admin-key';
+  const baseUrl = await startTestServer(t);
+  const saved = addQuoteRequest({
+    name: 'Sales User',
+    company: 'DINASTY Sales',
+    email: `sales-${Date.now()}@example.com`,
+    phone: '+1 555 0199',
+    service: 'marketing',
+    project: 'Lifecycle test'
+  });
+
+  const response = await fetch(`${baseUrl}/api/admin/quotes/${saved.id}`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json', 'x-admin-key': 'test-admin-key' },
+    body: JSON.stringify({ status: 'closed' })
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(listQuoteRequests().find((quote) => quote.id === saved.id).status, 'closed');
   assert.equal(deleteQuote(saved.id), true);
 });
 
@@ -96,4 +121,20 @@ test('quote validation rejects incomplete requests', async (t) => {
 
   assert.equal(response.status, 400);
   assert.deepEqual(await response.json(), { error: 'all fields are required' });
+});
+
+test('analytics events accept funnel stages and reject unknown events', async (t) => {
+  const baseUrl = await startTestServer(t);
+  const valid = await fetch(`${baseUrl}/api/analytics/events`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ eventName: 'choose_ai', aiKey: 'claude', category: 'writing' })
+  });
+  const invalid = await fetch(`${baseUrl}/api/analytics/events`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ eventName: 'password_export' })
+  });
+
+  assert.equal(valid.status, 201);
+  assert.equal((await valid.json()).eventName, 'choose_ai');
+  assert.equal(invalid.status, 400);
 });
