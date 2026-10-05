@@ -20,6 +20,7 @@ import {
   recordToolView, subscribeToCategory, unsubscribeFromCategory, listCategorySubscriptions, listSubscriberEmails,
   recordAnalyticsEvent
 } from './db.js';
+import { registerSmartPick } from './smart-pick-server.js';
 
 dotenv.config();
 
@@ -882,7 +883,9 @@ app.post('/api/agent-chat', async (req, res) => {
 });
 
 app.use((_req, res) => {
-  res.status(404).format({
+  res.status(404)
+  registerSmartPick(app, { requireUserSession, requireAdminAccess });
+  .format({
     html: () => res.sendFile(path.join(__dirname, '404.html')),
     json: () => res.json({ error: 'route not found' }),
     default: () => res.type('text').send('DINASTY: page not found')
